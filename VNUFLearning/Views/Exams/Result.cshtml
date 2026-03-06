@@ -1,0 +1,81 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kết quả bài thi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+        }
+        /* Tùy chỉnh màu xanh VNUF */
+        .text-vnuf {
+            color: #005b33;
+        }
+
+        .bg-vnuf {
+            background-color: #005b33;
+        }
+
+        .bg-vnuf-hover:hover {
+            background-color: #004526;
+        }
+
+        .border-vnuf {
+            border-color: #005b33;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white p-8 md:p-10 rounded-3xl shadow-2xl max-w-2xl w-full text-center border-t-8 border-vnuf">
+
+        <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <i class="fas fa-trophy text-5xl text-vnuf"></i>
+        </div>
+
+        <h1 class="text-3xl font-extrabold text-slate-800 mb-2">Hoàn thành bài thi!</h1>
+        <p class="text-slate-500 mb-8">Chúc mừng bạn đã hoàn thành. Dưới đây là kết quả luyện tập của bạn.</p>
+
+        <!-- THIẾT KẾ 3 CỘT CHO KẾT QUẢ -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <!-- Cột 1: Số câu đúng -->
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <p class="text-sm text-slate-500 font-semibold mb-2">Số câu đúng</p>
+                <p class="text-3xl font-bold text-slate-800">
+                    <span class="text-green-600">@ViewBag.Correct</span><span class="text-lg text-slate-400"> / @ViewBag.Total</span>
+                </p>
+            </div>
+
+            <!-- Cột 2: Điểm số -->
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <p class="text-sm text-slate-500 font-semibold mb-2">Điểm số</p>
+                <p class="text-3xl font-bold text-vnuf">
+                    @ViewBag.Score <span class="text-lg text-slate-400">/ 10</span>
+                </p>
+            </div>
+
+            <!-- Cột 3: Thời gian làm bài -->
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <p class="text-sm text-slate-500 font-semibold mb-2">Thời gian</p>
+                <p class="text-3xl font-bold text-orange-500">
+                    <i class="far fa-clock text-xl mr-1"></i> @ViewBag.TimeTaken
+                </p>
+            </div>
+        </div>
+
+        <!-- Nút quay lại trang chọn môn -->
+        <a href="/Exams/SelectSubject" class="inline-block w-full bg-vnuf bg-vnuf-hover text-white font-bold py-4 rounded-xl transition-all shadow-md hover:shadow-lg">
+            <i class="fas fa-undo-alt mr-2"></i> Trở về trang Chọn Môn
+        </a>
+    </div>
+
+</body>
+</html>

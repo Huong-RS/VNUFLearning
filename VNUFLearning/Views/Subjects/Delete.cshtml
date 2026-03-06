@@ -1,0 +1,13 @@
+﻿@model VNUFLearning.Models.Subject
+
+<h3>Bạn có chắc muốn xóa môn này?</h3>
+
+<div>
+    <strong>@Model.SubjectName</strong>
+</div>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="SubjectId" />
+    <button type="submit" class="btn btn-danger">Xóa</button>
+    <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+</form>

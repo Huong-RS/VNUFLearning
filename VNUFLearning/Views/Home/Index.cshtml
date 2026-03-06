@@ -1,0 +1,23 @@
+﻿@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<div class="container-fluid mt-2 mb-5">
+    <!-- Banner Giới thiệu Đổi sang nền Xanh Lá -->
+    <div class="p-5 text-center text-white rounded-4 shadow-sm mb-5 position-relative overflow-hidden" style="background: linear-gradient(135deg, #005b33 0%, #008a4e 100%);">
+
+        <div class="position-relative z-1">
+            <div class="d-inline-flex align-items-center justify-content-center bg-white text-success rounded-circle mb-3 shadow" style="width: 80px; height: 80px;">
+                <i class="fa fa-graduation-cap fa-3x" style="color: #005b33;"></i>
+            </div>
+            <h1 class="fw-bold mb-3 tracking-tight">VNUF Learning</h1>
+            <p class="lead mb-4 mx-auto opacity-75" style="max-width: 700px;">
+                Hệ thống hỗ trợ học tập và luyện thi thông minh tích hợp trí tuệ nhân tạo (AI) dành cho sinh viên trường Đại học Lâm Nghiệp.
+            </p>
+
+            <a asp-controller="Exams" asp-action="SelectSubject" class="btn btn-light btn-lg px-5 py-3 shadow rounded-pill fw-bold" style="color: #005b33;">
+                <i class="fa fa-rocket me-2"></i> Bắt đầu Luyện thi ngay
+            </a>
+        </div>
+    </div>
+</div>

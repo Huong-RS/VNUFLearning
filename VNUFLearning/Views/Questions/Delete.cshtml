@@ -1,0 +1,22 @@
+﻿@model VNUFLearning.Models.Question
+@{
+    ViewData["Title"] = "Xóa câu hỏi";
+}
+
+<div class="container mt-5">
+    <div class="alert alert-danger shadow-sm">
+        <h4><i class="fa fa-exclamation-triangle"></i> Xác nhận xóa</h4>
+        <p>Bạn có chắc chắn muốn xóa câu hỏi này khỏi môn <strong>@Model.Subject.SubjectName</strong>?</p>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">@Model.Content</h5>
+            <p class="card-text text-muted">Loại: @(Model.QuestionType == 1 ? "Trắc nghiệm" : "Tự luận")</p>
+            <form asp-action="Delete">
+                <input type="hidden" asp-for="QuestionId" />
+                <button type="submit" class="btn btn-danger">Xóa ngay</button>
+                <a asp-action="Index" class="btn btn-secondary">Hủy bỏ</a>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,196 @@
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using VNUFLearning.Models;
+
+namespace VNUFLearning.Data;
+
+public partial class VnufLearningContext : DbContext
+{
+    public VnufLearningContext()
+    {
+    }
+
+    public VnufLearningContext(DbContextOptions<VnufLearningContext> options)
+        : base(options)
+    {
+    }
+
+    public virtual DbSet<BlogPost> BlogPosts { get; set; }
+
+    public virtual DbSet<Comment> Comments { get; set; }
+
+    public virtual DbSet<Document> Documents { get; set; }
+
+    public virtual DbSet<ExamDetail> ExamDetails { get; set; }
+
+    public virtual DbSet<ExamResult> ExamResults { get; set; }
+
+    public virtual DbSet<Question> Questions { get; set; }
+
+    public virtual DbSet<Role> Roles { get; set; }
+
+    public virtual DbSet<Subject> Subjects { get; set; }
+
+    public virtual DbSet<User> Users { get; set; }
+
+   
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<BlogPost>(entity =>
+        {
+            entity.HasKey(e => e.PostId).HasName("PK__BlogPost__AA126018EE206CC6");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Title).HasMaxLength(200);
+            entity.Property(e => e.ViewCount).HasDefaultValue(0);
+
+            entity.HasOne(d => d.Author).WithMany(p => p.BlogPosts)
+                .HasForeignKey(d => d.AuthorId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__BlogPosts__Autho__5535A963");
+        });
+
+        modelBuilder.Entity<Comment>(entity =>
+        {
+            entity.HasKey(e => e.CommentId).HasName("PK__Comments__C3B4DFCADF1E1B0A");
+
+            entity.Property(e => e.Content).HasMaxLength(1000);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Post).WithMany(p => p.Comments)
+                .HasForeignKey(d => d.PostId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Comments__PostId__59063A47");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Comments)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Comments__UserId__59FA5E80");
+        });
+
+        modelBuilder.Entity<Document>(entity =>
+        {
+            entity.HasKey(e => e.DocumentId).HasName("PK__Document__1ABEEF0FC2765EB6");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.FilePath).HasMaxLength(500);
+            entity.Property(e => e.Title).HasMaxLength(200);
+
+            entity.HasOne(d => d.Subject).WithMany(p => p.Documents)
+                .HasForeignKey(d => d.SubjectId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Documents__Subje__412EB0B6");
+
+            entity.HasOne(d => d.UploadedByNavigation).WithMany(p => p.Documents)
+                .HasForeignKey(d => d.UploadedBy)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Documents__Uploa__4222D4EF");
+        });
+
+        modelBuilder.Entity<ExamDetail>(entity =>
+        {
+            entity.HasKey(e => e.DetailId).HasName("PK__ExamDeta__135C316D12C453B5");
+
+            entity.HasOne(d => d.ExamResult).WithMany(p => p.ExamDetails)
+                .HasForeignKey(d => d.ExamResultId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__ExamDetai__ExamR__4F7CD00D");
+
+            entity.HasOne(d => d.Question).WithMany(p => p.ExamDetails)
+                .HasForeignKey(d => d.QuestionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__ExamDetai__Quest__5070F446");
+        });
+
+        modelBuilder.Entity<ExamResult>(entity =>
+        {
+            entity.HasKey(e => e.ExamResultId).HasName("PK__ExamResu__3DBFDE2673C5DCBF");
+
+            entity.Property(e => e.FinishedAt).HasColumnType("datetime");
+            entity.Property(e => e.StartedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .HasDefaultValue("Completed");
+
+            entity.HasOne(d => d.Subject).WithMany(p => p.ExamResults)
+                .HasForeignKey(d => d.SubjectId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__ExamResul__Subje__4CA06362");
+
+            entity.HasOne(d => d.User).WithMany(p => p.ExamResults)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__ExamResul__UserI__4BAC3F29");
+        });
+
+        modelBuilder.Entity<Question>(entity =>
+        {
+            entity.HasKey(e => e.QuestionId).HasName("PK__Question__0DC06FAC0670DA65");
+
+            entity.Property(e => e.CorrectAnswer)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.ImageUrl).HasMaxLength(500);
+            entity.Property(e => e.Level).HasDefaultValue(1);
+            entity.Property(e => e.QuestionType).HasDefaultValue(1);
+
+            entity.HasOne(d => d.Subject).WithMany(p => p.Questions)
+                .HasForeignKey(d => d.SubjectId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Questions__Subje__46E78A0C");
+        });
+
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasKey(e => e.RoleId).HasName("PK__Roles__8AFACE1A14DB14E8");
+
+            entity.Property(e => e.RoleName).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<Subject>(entity =>
+        {
+            entity.HasKey(e => e.SubjectId).HasName("PK__Subjects__AC1BA3A842BECB86");
+
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.SubjectName).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4CD6F29042");
+
+            entity.HasIndex(e => e.StudentCode, "UQ__Users__1FC886047F5AAFA0").IsUnique();
+
+            entity.Property(e => e.AvatarUrl).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Email)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.FullName).HasMaxLength(100);
+            entity.Property(e => e.StudentCode)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.Role).WithMany(p => p.Users)
+                .HasForeignKey(d => d.RoleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Users__RoleId__3B75D760");
+        });
+
+        OnModelCreatingPartial(modelBuilder);
+    }
+
+    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+}
