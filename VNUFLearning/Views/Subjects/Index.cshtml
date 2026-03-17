@@ -1,77 +1,70 @@
 ﻿@model IEnumerable<VNUFLearning.Models.Subject>
-
 @{
+    Layout = User.IsInRole("Admin") ? "~/Views/Shared/_LayoutAdmin.cshtml" : "~/Views/Shared/_LayoutTeacher.cshtml";
     ViewData["Title"] = "Quản lý Môn học";
 }
 
-<div class="container mt-4">
+<div class="container-fluid mt-2">
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="fw-bold text-primary">📚 Quản lý Môn học</h3>
-
-        <a asp-action="Create" class="btn btn-success">
-            <i class="fa fa-plus"></i> Thêm môn học
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1" style="color: #005b33;"><i class="fa fa-book me-2"></i>Quản lý Môn học</h3>
+            <p class="text-muted small">Tra cứu, thêm mới và quản lý danh sách các học phần.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" style="background-color: #005b33;">
+            <i class="fa fa-plus me-1"></i> Thêm môn học
         </a>
     </div>
 
-    <!-- 🔎 SEARCH -->
-    <form method="get" class="row mb-3">
-        <div class="col-md-4">
-            <input name="keyword" class="form-control"
-                   placeholder="Tìm môn học..." value="@Context.Request.Query["keyword"]" />
+    <div class="card shadow-sm border-0 mb-4 rounded-4">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
+                        <input name="keyword" class="form-control border-start-0 ps-0 bg-light" placeholder="Tìm kiếm tên môn học..." value="@Context.Request.Query["keyword"]" />
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-success w-100 fw-bold" style="background-color: #005b33;">Tìm kiếm</button>
+                </div>
+            </form>
         </div>
-        <div class="col-md-2">
-            <button class="btn btn-primary w-100">Tìm</button>
-        </div>
-    </form>
+    </div>
 
-    <div class="card shadow-sm">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <table class="table table-hover align-middle mb-0">
-            <thead class="table-dark text-center">
+            <thead class="bg-light text-muted">
                 <tr>
-                    <th style="width:60px">#</th>
-                    <th class="text-start">Tên môn</th>
+                    <th class="ps-4" style="width:60px">#</th>
+                    <th>Tên môn</th>
                     <th>Mô tả</th>
-                    <th>Số câu hỏi</th>
-                    <th style="width:150px">Thao tác</th>
+                    <th class="text-center">Số câu hỏi</th>
+                    <th class="text-end pe-4" style="width:150px">Thao tác</th>
                 </tr>
             </thead>
             <tbody>
-                @{
-                    int stt = 1;
-                }
-
+                @{ int stt = 1; }
                 @foreach (var item in Model)
                 {
                     <tr>
-                        <td class="text-center">@stt</td>
-
-                        <td class="fw-semibold text-primary">
-                            @item.SubjectName
-                        </td>
-
-                        <td>@item.Description</td>
-
+                        <td class="ps-4 fw-bold text-muted">@stt</td>
+                        <td class="fw-bold text-dark">@item.SubjectName</td>
+                        <td class="text-muted small">@item.Description</td>
                         <td class="text-center">
-                            <span class="badge bg-info">
-                                @item.Questions.Count
+                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 border border-success border-opacity-25">
+                                @item.Questions.Count câu
                             </span>
                         </td>
-
-                        <td class="text-center">
-                            <a asp-action="Edit" asp-route-id="@item.SubjectId"
-                               class="btn btn-sm btn-warning">
+                        <td class="text-end pe-4">
+                            <a asp-action="Edit" asp-route-id="@item.SubjectId" class="btn btn-sm btn-outline-warning" title="Sửa">
                                 <i class="fa fa-edit"></i>
                             </a>
-
-                            <a asp-action="Delete" asp-route-id="@item.SubjectId"
-                               class="btn btn-sm btn-danger"
-                               onclick="return confirm('Xóa môn này?')">
+                            <a asp-action="Delete" asp-route-id="@item.SubjectId" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa môn này?')" title="Xóa">
                                 <i class="fa fa-trash"></i>
                             </a>
                         </td>
                     </tr>
-
                     stt++;
                 }
             </tbody>

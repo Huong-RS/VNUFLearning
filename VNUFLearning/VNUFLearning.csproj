@@ -28,6 +28,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <None Include="wwwroot\images\bgr.png" />
 	  <None Include="wwwroot\templates\MauImportCauHoi.xlsx" />
 	</ItemGroup>
 

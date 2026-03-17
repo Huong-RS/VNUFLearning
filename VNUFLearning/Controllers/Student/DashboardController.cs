@@ -3,13 +3,16 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace VNUFLearning.Controllers.Student
 {
-    [Authorize(Roles = "Student")]
+    [Authorize(Roles = "SinhVien")]
+
+    [Route("Student/[controller]/[action]")]
     public class DashboardController : Controller
     {
-       
+        [Route("~/Student/Dashboard")]
+        [Route("")]
         public IActionResult Index()
         {
-            return View();
+            return View("~/Views/student/Dashboard/Index.cshtml");
         }
     }
 }

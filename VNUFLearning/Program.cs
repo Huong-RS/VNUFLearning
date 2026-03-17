@@ -28,6 +28,8 @@ namespace VNUFLearning
 
             var app = builder.Build();
 
+           
+
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
@@ -43,7 +45,7 @@ namespace VNUFLearning
 
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
+                pattern: "{controller=Account}/{action=Login}/{id?}");
 
             app.Run();
         }

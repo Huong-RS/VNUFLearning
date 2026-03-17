@@ -3,35 +3,25 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - VNUF Learning</title>
+    <title>@ViewData["Title"] - Giảng viên VNUF</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/VNUFLearning.styles.css" asp-append-version="true" />
-
-    <!-- Font Awesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
-    <!-- Font Chữ Hiện Đại (Inter) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f4f7f6; /* Nền xám nhạt dịu mắt */
-            margin: 0;
+            background-color: #f4f7f6;
             overflow-x: hidden;
         }
 
-        /* ===== THIẾT KẾ LẠI SIDEBAR ===== */
         .vnuf-sidebar {
-            width: 280px; /* Thanh bên to hơn bản cũ */
-            background-color: #005b33; /* Xanh lá đặc trưng VNUF */
+            width: 280px;
+            background-color: #005b33;
             min-height: 100vh;
             position: fixed;
-            top: 0;
-            left: 0;
             color: white;
-            z-index: 1000;
             box-shadow: 4px 0 15px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
@@ -44,14 +34,9 @@
             display: flex;
             align-items: center;
             border-bottom: 1px solid rgba(255,255,255,0.1);
-            letter-spacing: 0.5px;
             color: white;
             text-decoration: none;
         }
-
-            .sidebar-brand:hover {
-                color: #e8f5e9;
-            }
 
         .sidebar-nav {
             padding: 20px 0;
@@ -60,14 +45,10 @@
             flex-grow: 1;
         }
 
-        .nav-item {
-            margin-bottom: 8px;
-        }
-
         .nav-link {
             color: rgba(255,255,255,0.85);
-            padding: 16px 25px;
-            font-size: 1.15rem; /* FORM CHỮ TO, ĐẸP HƠN */
+            padding: 14px 25px;
+            font-size: 1.05rem;
             font-weight: 500;
             display: flex;
             align-items: center;
@@ -76,21 +57,19 @@
             text-decoration: none;
         }
 
-            /* Hiệu ứng khi di chuột hoặc Đang chọn (Active) */
             .nav-link:hover, .nav-link.active {
                 color: white;
                 background-color: rgba(255,255,255,0.1);
-                border-left-color: #f39c12; /* Vệt cam điểm nhấn */
+                border-left-color: #f39c12;
             }
 
             .nav-link i {
                 margin-right: 15px;
-                font-size: 1.3rem;
+                font-size: 1.2rem;
                 width: 30px;
                 text-align: center;
             }
 
-        /* ===== KHU VỰC NỘI DUNG CHÍNH ===== */
         .main-content {
             margin-left: 280px;
             width: calc(100% - 280px);
@@ -99,7 +78,6 @@
             flex-direction: column;
         }
 
-        /* Thanh Topbar bên trên */
         .top-header {
             background: white;
             padding: 15px 35px;
@@ -109,79 +87,48 @@
             align-items: center;
             z-index: 10;
         }
-
-            .top-header h5 {
-                margin: 0;
-                font-weight: 600;
-                color: #495057;
-            }
     </style>
 </head>
 <body>
     <div class="d-flex">
-        <!-- THANH SIDEBAR BÊN TRÁI MÀU XANH VNUF -->
         <nav class="vnuf-sidebar">
-            <a href="/Home/Index" class="sidebar-brand">
+            <a href="/Teacher/Dashboard" class="sidebar-brand">
                 <div class="bg-white text-success rounded p-2 me-3 d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
-                    <i class="fa fa-leaf" style="color: #005b33;"></i>
+                    <i class="fa fa-chalkboard-user" style="color: #005b33;"></i>
                 </div>
-                VNUF Learning
+                Giảng viên VNUF
             </a>
 
             <ul class="sidebar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" asp-controller="Home" asp-action="Index">
-                        <i class="fa fa-house"></i> Trang chủ
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" asp-controller="Subjects" asp-action="Index">
-                        <i class="fa fa-book"></i> Quản lý Môn học
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" asp-controller="Questions" asp-action="Index">
-                        <i class="fa fa-database"></i> Ngân hàng Câu hỏi
-                    </a>
-                </li>
-                <li class="nav-item mt-2">
-                    <a class="nav-link text-warning fw-bold" asp-controller="Exams" asp-action="SelectSubject">
-                        <i class="fa fa-laptop-code"></i> Khu vực Luyện thi
-                    </a>
-                </li>
+                <!-- Bám sát đề cương phần Giảng viên -->
+                <li class="nav-item"><a class="nav-link" asp-controller="Dashboard" asp-action="Index"><i class="fa fa-house"></i> Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" asp-controller="Subjects" asp-action="Index"><i class="fa fa-book"></i> Môn học</a></li>
+                <li class="nav-item"><a class="nav-link" asp-controller="Questions" asp-action="Index"><i class="fa fa-database"></i> Ngân hàng câu hỏi</a></li>
+                <li class="nav-item"><a class="nav-link text-warning" asp-controller="Exams" asp-action="Create"><i class="fa fa-plus-circle"></i> Tạo đề thi</a></li>
+                <li class="nav-item"><a class="nav-link" asp-controller="Results" asp-action="Index"><i class="fa fa-award"></i> Kết quả sinh viên</a></li>
+                <li class="nav-item"><a class="nav-link" asp-controller="Blog" asp-action="Index"><i class="fa fa-comments"></i> Blog</a></li>
+                <li class="nav-item"><a class="nav-link" asp-controller="Documents" asp-action="Index"><i class="fa fa-file-word"></i> Tài liệu</a></li>
             </ul>
-
-            <!-- Phần thông tin user dưới đáy sidebar -->
-            <div class="p-4 border-top border-light border-opacity-10 text-white-50 small text-center">
-                &copy; 2026 - Khoa CNTT VNUF<br />
-                Đinh Diệu Hương - K67HTTT
-            </div>
         </nav>
 
-        <!-- KHUNG NỘI DUNG CHÍNH (BÊN PHẢI) -->
         <div class="main-content">
-            <!-- Thanh Header Trắng Trên Cùng -->
             <header class="top-header">
-                <h5>@ViewData["Title"]</h5>
+                <h5 class="m-0 fw-bold text-dark">@ViewData["Title"]</h5>
                 <div class="d-flex align-items-center cursor-pointer">
                     <div class="text-end me-3 d-none d-md-block">
-                        <div class="fw-bold text-dark" style="font-size: 0.95rem;">Quản trị viên</div>
-                        <div class="text-muted small">Hệ thống</div>
+                        <div class="fw-bold text-dark" style="font-size: 0.95rem;">@User.Identity.Name</div>
+                        <a href="/Account/Logout" class="text-danger small text-decoration-none">Đăng xuất</a>
                     </div>
-                    <img src="https://ui-avatars.com/api/?name=Admin&background=005b33&color=fff" alt="Avatar" class="rounded-circle shadow-sm" style="width: 45px; height: 45px;">
+                    <img src="https://ui-avatars.com/api/?name=Teacher&background=005b33&color=fff" class="rounded-circle shadow-sm" style="width: 40px; height: 40px;">
                 </div>
             </header>
 
-            <!-- Render Nội Dung Các Trang Khác Vào Đây -->
             <main role="main" class="flex-grow-1 p-4 p-md-5">
                 @RenderBody()
             </main>
         </div>
     </div>
-
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -1,0 +1,33 @@
+﻿<header class="top-header">
+
+    <h5>@ViewData["Title"]</h5>
+
+    <div class="d-flex align-items-center">
+
+        <div class="text-end me-3">
+
+            <div class="fw-bold">
+                @User.Identity.Name
+            </div>
+
+            <div class="text-muted small">
+                Giảng viên
+            </div>
+
+        </div>
+
+        <img src="https://ui-avatars.com/api/?name=@User.Identity.Name&background=005b33&color=fff"
+             class="rounded-circle"
+             width="40" />
+
+        <a asp-controller="Account" asp-action="Logout"
+           class="btn btn-outline-danger ms-3 btn-sm">
+
+            <i class="fa fa-sign-out"></i>
+            Logout
+
+        </a>
+
+    </div>
+
+</header>
