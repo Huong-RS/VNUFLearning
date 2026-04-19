@@ -1,14 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using VNUFLearning.Data;
-using VNUFLearning.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace VNUFLearning.Controllers.Teacher
+namespace VNUFLearning.Controllers
 {
+    // Cấp quyền cho Giảng viên (và cả Admin nếu cần)
+    [Authorize(Roles = "GiangVien,Admin")]
+    [Route("Teacher/[controller]/[action]")]
     public class ExamsController : Controller
     {
         private readonly VnufLearningContext _context;
@@ -18,72 +17,21 @@ namespace VNUFLearning.Controllers.Teacher
             _context = context;
         }
 
-        // 1. Trang chọn môn thi
-        public IActionResult SelectSubject()
-        {
-            var subjects = _context.Subjects.ToList();
-            return View(subjects);
-        }
-
-        // 2. Tạo đề thi theo môn
-        public async Task<IActionResult> StartExam(int subjectId)
-        {
-            var subject = await _context.Subjects.FindAsync(subjectId);
-            ViewBag.SubjectName = subject?.SubjectName ?? "Môn học";
-            ViewBag.SubjectId = subjectId;
-
-            // Lấy ngẫu nhiên 10 câu hỏi
-            var questions = await _context.Questions
-                .Where(q => q.SubjectId == subjectId && q.QuestionType == 1)
-                .OrderBy(q => Guid.NewGuid())
-                .Take(10)
-                .ToListAsync();
-
-            if (questions == null || !questions.Any())
-            {
-                return Content("Chưa có câu hỏi trắc nghiệm nào cho môn học này.");
-            }
-
-            return View(questions);
-        }
-
-        // 3. Nộp bài và chấm điểm (ĐÃ BỔ SUNG timeTaken)
+        // Chỉ hiển thị giao diện, tạm thời chưa lưu Database
+        [HttpGet]
+        // Xử lý khi Giảng viên bấm nút "Bắt đầu Sinh đề"
         [HttpPost]
-        public IActionResult SubmitExam(Dictionary<int, string> answers, int timeTaken)
+        [Route("~/Teacher/Exams/Create")]
+        public IActionResult Create(string examName, int subjectId, int duration, int numberOfQuestions)
         {
-            int correct = 0;
+            // Vì CSDL của bạn hiện tại chưa có bảng Exam (Đề thi) để lưu trữ vĩnh viễn
+            // Nên tạm thời chúng ta sẽ trả về thông báo thành công "ảo" để Giảng viên xem giao diện.
+            // Nếu muốn lưu thật, bạn sẽ cần thiết kế thêm bảng Exam vào SQL Server sau nhé.
 
-            if (answers == null || !answers.Any())
-            {
-                answers = new Dictionary<int, string>();
-            }
+            TempData["Success"] = $"Mô phỏng thành công: Đã tạo đề '{examName}' với {numberOfQuestions} câu hỏi. (Cần cập nhật CSDL để lưu trữ chính thức).";
 
-            var questionIds = answers.Keys.ToList();
-
-            var questions = _context.Questions
-                .Where(q => questionIds.Contains(q.QuestionId))
-                .ToList();
-
-            foreach (var q in questions)
-            {
-                if (answers.ContainsKey(q.QuestionId) && answers[q.QuestionId] == q.CorrectAnswer)
-                {
-                    correct++;
-                }
-            }
-
-            int total = 10;
-            double score = total > 0 ? Math.Round((double)correct / total * 10, 2) : 0;
-
-            // Xử lý thời gian làm bài (đổi từ giây sang dạng mm:ss)
-            TimeSpan time = TimeSpan.FromSeconds(timeTaken);
-            ViewBag.TimeTaken = time.ToString(@"mm\:ss");
-
-            ViewBag.Score = score;
-            ViewBag.Correct = correct;
-            ViewBag.Total = total;
-
-            return View("Result");
+            // Tải lại trang Create để hiển thị thông báo
+            return RedirectToAction("Create");
         }
     }
 }
