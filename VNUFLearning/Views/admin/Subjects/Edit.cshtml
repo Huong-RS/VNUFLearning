@@ -1,0 +1,53 @@
+﻿@model VNUFLearning.Models.Subject
+
+@{
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    ViewData["Title"] = "Chỉnh sửa môn học";
+}
+
+<div class="container-fluid mt-2">
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-1">
+            <i class="fa fa-pen text-success me-2"></i> Chỉnh sửa môn học
+        </h3>
+        <p class="text-muted small">Cập nhật thông tin môn học.</p>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <form asp-action="Edit" asp-route-id="@Model.SubjectId" method="post">
+                @Html.AntiForgeryToken()
+                <input asp-for="SubjectId" type="hidden" />
+
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row g-4">
+                    <div class="col-md-8">
+                        <label asp-for="SubjectName" class="form-label fw-bold">Tên môn học</label>
+                        <input asp-for="SubjectName" class="form-control" />
+                        <span asp-validation-for="SubjectName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label asp-for="Description" class="form-label fw-bold">Mô tả</label>
+                        <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-success px-4">
+                        <i class="fa fa-save me-1"></i> Lưu thay đổi
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4">
+                        <i class="fa fa-arrow-left me-1"></i> Quay lại
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

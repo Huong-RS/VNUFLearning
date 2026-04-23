@@ -1,0 +1,119 @@
+﻿@model VNUFLearning.Models.Question
+
+@{
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    ViewData["Title"] = "Tạo câu hỏi mới";
+}
+
+<div class="container-fluid mt-2">
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-1">
+            <i class="fa fa-circle-plus text-success me-2"></i> Thêm câu hỏi mới
+        </h3>
+        <p class="text-muted small">Admin có thể thêm câu hỏi cho mọi môn học trong hệ thống.</p>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <form action="/Admin/Questions/Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row g-4">
+                    <div class="col-md-8">
+                        <label asp-for="Content" class="form-label fw-bold">Nội dung câu hỏi</label>
+                        <textarea asp-for="Content" class="form-control" rows="4"></textarea>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="SubjectId" class="form-label fw-bold">Môn học</label>
+                        <select asp-for="SubjectId" asp-items="ViewBag.SubjectId" class="form-select"></select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="QuestionType" class="form-label fw-bold">Loại câu hỏi</label>
+                        <select asp-for="QuestionType" class="form-select" id="questionType" onchange="toggleOptions()">
+                            <option value="1">Trắc nghiệm</option>
+                            <option value="2">Tự luận</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Level" class="form-label fw-bold">Mức độ</label>
+                        <select asp-for="Level" class="form-select">
+                            <option value="1">Dễ</option>
+                            <option value="2">Trung bình</option>
+                            <option value="3">Khó</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Chapter" class="form-label fw-bold">Chương / Chủ đề</label>
+                        <input asp-for="Chapter" class="form-control" />
+                    </div>
+
+                    <div id="multipleChoiceArea" class="row g-4">
+                        <div class="col-md-6">
+                            <label asp-for="OptionA" class="form-label fw-bold">Đáp án A</label>
+                            <input asp-for="OptionA" class="form-control" id="optA" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="OptionB" class="form-label fw-bold">Đáp án B</label>
+                            <input asp-for="OptionB" class="form-control" id="optB" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="OptionC" class="form-label fw-bold">Đáp án C</label>
+                            <input asp-for="OptionC" class="form-control" id="optC" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="OptionD" class="form-label fw-bold">Đáp án D</label>
+                            <input asp-for="OptionD" class="form-control" id="optD" />
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="CorrectAnswer" class="form-label fw-bold">Đáp án đúng / Gợi ý đáp án</label>
+                        <input asp-for="CorrectAnswer" class="form-control" id="correctAnswerInput" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Explaination" class="form-label fw-bold">Giải thích</label>
+                        <input asp-for="Explaination" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-success px-4">
+                        <i class="fa fa-save me-1"></i> Lưu
+                    </button>
+                    <a href="/Admin/Questions" class="btn btn-outline-secondary px-4">
+                        <i class="fa fa-arrow-left me-1"></i> Quay lại
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleOptions() {
+            const type = document.getElementById("questionType").value;
+            const mcArea = document.getElementById("multipleChoiceArea");
+
+            if (type === "1") {
+                mcArea.style.display = "flex";
+            } else {
+                mcArea.style.display = "none";
+                document.getElementById("optA").value = "";
+                document.getElementById("optB").value = "";
+                document.getElementById("optC").value = "";
+                document.getElementById("optD").value = "";
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            toggleOptions();
+        });
+    </script>
+}

@@ -1,0 +1,83 @@
+﻿@model IEnumerable<VNUFLearning.Models.Subject>
+
+@{
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    ViewData["Title"] = "Quản lý môn học";
+}
+
+<div class="container-fluid mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">
+                <i class="fa fa-book text-success me-2"></i> Danh sách môn học
+            </h3>
+            <p class="text-muted small">Quản lý các môn học trong hệ thống.</p>
+        </div>
+
+        <a href="/Admin/Subjects/Create"
+           class="btn btn-success fw-bold rounded-pill px-4 shadow-sm"
+           style="background-color: #005b33;">
+            <i class="fa fa-plus me-1"></i> Thêm môn học
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success shadow-sm rounded-3 border-0 bg-success bg-opacity-10 text-success fw-bold">
+            <i class="fa fa-check-circle me-2"></i> @TempData["Success"]
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-muted" style="font-size: 0.9rem;">
+                        <tr>
+                            <th class="ps-4 py-3">Mã môn học</th>
+                            <th>Tên môn học</th>
+                            <th>Mô tả</th>
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    Chưa có môn học nào trong hệ thống.
+                                </td>
+                            </tr>
+                        }
+
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-4 fw-bold text-dark">@item.SubjectId</td>
+                                <td class="fw-bold">@item.SubjectName</td>
+                                <td class="text-muted">
+                                    @(string.IsNullOrWhiteSpace(item.Description) ? "Chưa có mô tả" : item.Description)
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group shadow-sm">
+                                        <a asp-action="Edit" asp-route-id="@item.SubjectId" class="btn btn-sm btn-outline-primary" title="Chỉnh sửa môn học">
+                                            <i class="fa fa-pen"></i>
+                                        </a>
+
+                                        <form asp-action="Delete" asp-route-id="@item.SubjectId" method="post" class="d-inline"
+                                              onsubmit="return confirm('Bạn có chắc chắn muốn xóa môn học @item.SubjectName?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa môn học">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

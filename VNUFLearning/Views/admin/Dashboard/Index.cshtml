@@ -1,9 +1,7 @@
 ﻿@{
-    // Gọi Layout của Admin đã tạo ở bước trước
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
-    ViewData["Title"] = "Tổng quan Hệ thống";
+    ViewData["Title"] = "Dashboard Admin";
 }
-
 <!-- Custom CSS cho Dashboard -->
 <style>
     .stat-card {
@@ -183,10 +181,10 @@
                         <a href="/Admin/Users/Create" class="btn btn-outline-success text-start p-3 fw-bold rounded-3">
                             <i class="fa fa-user-plus fs-5 me-2 w-20px"></i> Cấp tài khoản mới
                         </a>
-                        <a href="/Subjects" class="btn btn-outline-primary text-start p-3 fw-bold rounded-3">
+                        <a href="/Admin/Subjects" class="btn btn-outline-primary text-start p-3 fw-bold rounded-3">
                             <i class="fa fa-book fs-5 me-2 w-20px"></i> Quản lý Môn học
                         </a>
-                        <a href="/Questions" class="btn btn-outline-warning text-start p-3 fw-bold rounded-3 text-dark">
+                        <a href="/Admin/Questions" class="btn btn-outline-warning text-start p-3 fw-bold rounded-3 text-dark">
                             <i class="fa fa-database fs-5 me-2 w-20px"></i> Kiểm tra Kho câu hỏi
                         </a>
                     </div>

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using VNUFLearning.Data;
-using VNUFLearning.Models;
 
 namespace VNUFLearning.Controllers
 {
@@ -17,9 +16,6 @@ namespace VNUFLearning.Controllers
             _context = context;
         }
 
-        // =========================
-        // HIỂN THỊ TRANG LOGIN
-        // =========================
         [HttpGet]
         public IActionResult Login()
         {
@@ -31,69 +27,88 @@ namespace VNUFLearning.Controllers
             return View();
         }
 
-        // =========================
-        // XỬ LÝ ĐĂNG NHẬP
-        // =========================
         [HttpPost]
-        // SỬA LỖI 1: Tham số phải là 'username' để khớp với name="username" của form HTML
         public async Task<IActionResult> Login(string username, string password)
         {
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            username = (username ?? string.Empty).Trim();
+            password = (password ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
-                ViewBag.Error = "Vui lòng nhập đầy đủ tài khoản và mật khẩu.";
-                return View();
+                TempData["ErrorMessage"] = "Vui lòng nhập đầy đủ tài khoản và mật khẩu.";
+                return RedirectToAction("Login");
             }
 
-            var user = await _context.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u =>
-                    u.StudentCode == username &&
-                    u.PasswordHash == password);
-
-            if (user == null)
+            try
             {
-                ViewBag.Error = "Tài khoản hoặc mật khẩu không chính xác.";
-                return View();
+                var user = await _context.Users
+     .AsNoTracking()
+     .Where(u => u.StudentCode != null && u.StudentCode.Trim() == username)
+     .Select(u => new
+     {
+         u.UserId,
+         u.StudentCode,
+         u.PasswordHash,
+         u.FullName,
+         u.IsActive,
+         RoleName = u.Role.RoleName
+     })
+     .FirstOrDefaultAsync();
+
+                if (user == null)
+                {
+                    TempData["ErrorMessage"] = "Tài khoản không tồn tại.";
+                    return RedirectToAction("Login");
+                }
+                if (!user.IsActive)
+                {
+                    TempData["ErrorMessage"] = "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.";
+                    return RedirectToAction("Login");
+                }
+
+                var dbPassword = (user.PasswordHash ?? string.Empty).Trim();
+
+                // Sau khi ổn sẽ đổi sang BCrypt.
+                if (dbPassword != password)
+                {
+                    TempData["ErrorMessage"] = "Mật khẩu không chính xác.";
+                    return RedirectToAction("Login");
+                }
+
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.StudentCode ?? username),
+                    new Claim("FullName", string.IsNullOrWhiteSpace(user.FullName) ? user.StudentCode ?? username : user.FullName),
+                    new Claim(ClaimTypes.Role, user.RoleName ?? ""),
+                    new Claim("UserId", user.UserId.ToString())
+                };
+
+                var claimsIdentity = new ClaimsIdentity(
+                    claims,
+                    CookieAuthenticationDefaults.AuthenticationScheme
+                );
+
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTime.UtcNow.AddMinutes(30)
+                };
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity),
+                    authProperties
+                );
+
+                return RedirectToDashboard(user.RoleName);
             }
-
-            // =========================
-            // TẠO CLAIMS
-            // =========================
-            var claims = new List<Claim>
+            catch (Exception)
             {
-                new Claim(ClaimTypes.Name, user.StudentCode),
-                new Claim("FullName", user.FullName),
-                new Claim(ClaimTypes.Role, user.Role.RoleName),
-                new Claim("UserId", user.UserId.ToString())
-            };
-
-            var claimsIdentity = new ClaimsIdentity(
-                claims,
-                CookieAuthenticationDefaults.AuthenticationScheme
-            );
-
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = true,
-                ExpiresUtc = DateTime.UtcNow.AddHours(8)
-            };
-
-            // =========================
-            // SIGN IN
-            // =========================
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
-                authProperties
-            );
-
-            // Chuyển trang theo Role
-            return RedirectToDashboard(user.Role.RoleName);
+                TempData["ErrorMessage"] = "Không thể kết nối cơ sở dữ liệu. Vui lòng thử lại sau.";
+                return RedirectToAction("Login");
+            }
         }
 
-        // =========================
-        // LOGOUT
-        // =========================
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(
@@ -102,9 +117,6 @@ namespace VNUFLearning.Controllers
             return RedirectToAction("Login", "Account");
         }
 
-        // =========================
-        // REDIRECT DASHBOARD 
-        // =========================
         private IActionResult RedirectToDashboard(string? role = null)
         {
             if (string.IsNullOrEmpty(role))
@@ -112,22 +124,13 @@ namespace VNUFLearning.Controllers
                 role = User.FindFirstValue(ClaimTypes.Role);
             }
 
-            // SỬA LỖI 2 & 3: Bắt đúng tên Role trong SQL và Dùng Redirect cứng 
-            // để tránh lỗi trùng tên DashboardController
-            switch (role)
+            return role switch
             {
-                case "Admin":
-                    return Redirect("/Admin/Dashboard/Index");
-
-                case "GiangVien": // Tên trong SQL là GiangVien
-                    return Redirect("/Teacher/Dashboard/Index");
-
-                case "SinhVien": // Tên trong SQL là SinhVien
-                    return Redirect("/Student/Dashboard/Index");
-
-                default:
-                    return Redirect("/Home/Index");
-            }
+                "Admin" => Redirect("/Admin/Dashboard"),
+                "GiangVien" => Redirect("/Teacher/Dashboard"),
+                "SinhVien" => Redirect("/Student/Dashboard"),
+                _ => RedirectToAction("Login", "Account")
+            };
         }
     }
 }

@@ -1,0 +1,71 @@
+﻿@model VNUFLearning.Models.ViewModels.UserFormViewModel
+
+@{
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    ViewData["Title"] = "Chỉnh sửa tài khoản";
+}
+
+<div class="container-fluid mt-2">
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-1">
+            <i class="fa fa-user-pen text-success me-2"></i> Chỉnh sửa tài khoản
+        </h3>
+        <p class="text-muted small">Cập nhật thông tin tài khoản người dùng.</p>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <form asp-action="Edit" asp-route-id="@Model.UserId" method="post">
+                <input asp-for="UserId" type="hidden" />
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label asp-for="StudentCode" class="form-label fw-bold"></label>
+                        <input asp-for="StudentCode" class="form-control" />
+                        <span asp-validation-for="StudentCode" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="FullName" class="form-label fw-bold"></label>
+                        <input asp-for="FullName" class="form-control" />
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Email" class="form-label fw-bold"></label>
+                        <input asp-for="Email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="RoleId" class="form-label fw-bold"></label>
+                        <select asp-for="RoleId" asp-items="ViewBag.RoleId" class="form-select">
+                            <option value="">-- Chọn vai trò --</option>
+                        </select>
+                        <span asp-validation-for="RoleId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Password" class="form-label fw-bold"></label>
+                        <input asp-for="Password" class="form-control" placeholder="Bỏ trống nếu không đổi mật khẩu" />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-success px-4">
+                        <i class="fa fa-save me-1"></i> Lưu thay đổi
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4">
+                        <i class="fa fa-arrow-left me-1"></i> Quay lại
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,4 +1,9 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var path = Context?.Request?.Path.Value?.ToLower() ?? "";
+    var displayName = User?.FindFirst("FullName")?.Value ?? User?.Identity?.Name ?? "Sinh viên";
+}
+
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
@@ -7,12 +12,8 @@
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
-    <!-- Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
     <style>
         body {
@@ -26,10 +27,13 @@
             background-color: #005b33;
             min-height: 100vh;
             position: fixed;
+            top: 0;
+            left: 0;
             color: white;
             box-shadow: 4px 0 15px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
+            z-index: 1000;
         }
 
         .sidebar-brand {
@@ -43,6 +47,11 @@
             text-decoration: none;
         }
 
+            .sidebar-brand:hover {
+                color: white;
+                text-decoration: none;
+            }
+
         .sidebar-nav {
             padding: 20px 0;
             list-style: none;
@@ -50,14 +59,14 @@
             flex-grow: 1;
         }
 
-        .nav-item {
-            margin-bottom: 5px;
-        }
+            .sidebar-nav li {
+                margin-bottom: 4px;
+            }
 
         .nav-link {
             color: rgba(255,255,255,0.85);
             padding: 16px 25px;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 500;
             display: flex;
             align-items: center;
@@ -66,18 +75,20 @@
             text-decoration: none;
         }
 
-        .nav-link:hover {
-            color: white;
-            background-color: rgba(255,255,255,0.1);
-            border-left-color: #f39c12;
-        }
+            .nav-link:hover,
+            .nav-link.active {
+                color: white;
+                background-color: rgba(255,255,255,0.1);
+                border-left-color: #f39c12;
+                text-decoration: none;
+            }
 
-        .nav-link i {
-            margin-right: 15px;
-            font-size: 1.2rem;
-            width: 30px;
-            text-align: center;
-        }
+            .nav-link i {
+                margin-right: 15px;
+                font-size: 1.1rem;
+                width: 24px;
+                text-align: center;
+            }
 
         .main-content {
             margin-left: 280px;
@@ -95,112 +106,100 @@
             justify-content: space-between;
             align-items: center;
         }
+
+        @@media (max-width: 991.98px) {
+            .vnuf-sidebar {
+                width: 100%;
+                position: relative;
+                min-height: auto;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
     </style>
 </head>
-
 <body>
-
-<div class="d-flex">
-
-    <!-- SIDEBAR -->
-    <nav class="vnuf-sidebar">
-
-        <a href="/Student/Dashboard" class="sidebar-brand">
-            <div class="bg-white text-success rounded p-2 me-3 d-flex align-items-center justify-content-center"
-                 style="width:40px;height:40px;">
-                <i class="fa fa-user-graduate" style="color:#005b33;"></i>
-            </div>
-            Sinh viên VNUF
-        </a>
-
-        <ul class="sidebar-nav">
-
-            <li class="nav-item">
-                <a class="nav-link" href="/Student/Dashboard">
-                    <i class="fa fa-house"></i> Dashboard
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link" href="/Exams/SelectSubject">
-                    <i class="fa fa-laptop-code"></i> Luyện thi
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link" href="/Student/Result">
-                    <i class="fa fa-history"></i> Lịch sử làm bài
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link" href="/Student/Blog">
-                    <i class="fa fa-comments"></i> Blog
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link" href="/Student/Document">
-                    <i class="fa fa-file-pdf"></i> Tài liệu học tập
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link" href="/Student/Profile">
-                    <i class="fa fa-id-card"></i> Thông tin cá nhân
-                </a>
-            </li>
-
-        </ul>
-
-    </nav>
-
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
-
-      <header class="top-header">
-
-    <h5 class="m-0 fw-bold text-dark">
-        @ViewData["Title"]
-    </h5>
-
-    <div class="d-flex align-items-center">
-
-        <div class="text-end me-3">
-
-            <div class="fw-bold text-dark" style="font-size:0.95rem;">
-                @(User.FindFirst("FullName")?.Value)
-            </div>
-
-            <a href="/Account/Logout" class="text-danger small text-decoration-none">
-                Đăng xuất
+    <div class="d-flex">
+        <nav class="vnuf-sidebar">
+            <a href="/Student/Dashboard" class="sidebar-brand">
+                <div class="bg-white text-success rounded p-2 me-3 d-flex align-items-center justify-content-center"
+                     style="width:40px;height:40px;">
+                    <i class="fa fa-user-graduate" style="color:#005b33;"></i>
+                </div>
+                Sinh viên VNUF
             </a>
 
+            <ul class="sidebar-nav">
+                <li>
+                    <a class="nav-link @(path.Contains("/student/dashboard") ? "active" : "")"
+                       href="/Student/Dashboard">
+                        <i class="fa fa-house"></i> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-link @(path.Contains("/student/practice") ? "active" : "")"
+                       href="/Student/Practice">
+                        <i class="fa fa-laptop-code"></i> Luyện thi
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-link @(path.Contains("/student/result") ? "active" : "")"
+                       href="/Student/Result">
+                        <i class="fa fa-history"></i> Lịch sử
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-link @(path.Contains("/student/blog") ? "active" : "")"
+                       href="/Student/Blog">
+                        <i class="fa fa-comments"></i> Blog
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-link @(path.Contains("/student/documents") ? "active" : "")"
+                       href="/Student/Documents">
+                        <i class="fa fa-file-pdf"></i> Tài liệu
+                    </a>
+                </li>
+                <li>
+                    <a class="nav-link @(path.Contains("/student/profile") ? "active" : "")"
+                       href="/Student/Profile">
+                        <i class="fa fa-id-card"></i> Hồ sơ
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="main-content">
+            <header class="top-header">
+                <h5 class="m-0 fw-bold text-dark">@ViewData["Title"]</h5>
+
+                <div class="d-flex align-items-center">
+                    <div class="text-end me-3">
+                        <div class="fw-bold text-dark">@displayName</div>
+                        <div class="text-muted small">Sinh viên</div>
+                    </div>
+
+                    <img src="https://ui-avatars.com/api/?name=@displayName&background=005b33&color=fff"
+                         class="rounded-circle shadow-sm"
+                         style="width:40px;height:40px;"
+                         alt="Avatar" />
+
+                    <a href="/Account/Logout" class="btn btn-outline-danger ms-3 btn-sm">
+                        <i class="fa fa-sign-out-alt"></i>
+                    </a>
+                </div>
+            </header>
+
+            <main class="flex-grow-1 p-4 p-md-5">
+                @RenderBody()
+            </main>
         </div>
-
-        <img src="https://ui-avatars.com/api/?name=@(User.FindFirst("FullName")?.Value)&background=005b33&color=fff"
-             class="rounded-circle shadow-sm"
-             style="width:40px;height:40px;">
-
     </div>
 
-</header>
-
-
-        <!-- PAGE CONTENT -->
-        <main class="flex-grow-1 p-4 p-md-5">
-
-            @RenderBody()
-
-        </main>
-
-    </div>
-
-</div>
-
-<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-
-@await RenderSectionAsync("Scripts", required: false)
-
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

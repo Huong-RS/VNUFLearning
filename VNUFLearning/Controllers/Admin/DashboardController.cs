@@ -3,20 +3,18 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace VNUFLearning.Controllers.Admin
 {
-    // Bắt buộc người dùng phải có quyền Admin mới được vào
     [Authorize(Roles = "Admin")]
-
-    // Ép đường dẫn phải bắt đầu bằng /Admin/Dashboard/...
     [Route("Admin/[controller]/[action]")]
     public class DashboardController : Controller
     {
-        // Thiết lập hàm Index làm trang mặc định khi truy cập /Admin/Dashboard
+        [HttpGet]
+        [Route("~/Admin")]
         [Route("~/Admin/Dashboard")]
-        [Route("")]
+        [Route("~/Admin/Dashboard/Index")]
         public IActionResult Index()
         {
-            // Trỏ đường dẫn tuyệt đối đến View để tránh lỗi hệ thống tìm sai chỗ
-            return View("~/Views/admin/Dashboard/Index.cshtml");
+            ViewData["Title"] = "Dashboard Admin";
+            return View("~/Views/Admin/Dashboard/Index.cshtml");
         }
     }
 }

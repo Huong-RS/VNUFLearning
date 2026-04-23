@@ -137,17 +137,26 @@ public partial class VnufLearningContext : DbContext
             entity.HasKey(e => e.QuestionId).HasName("PK__Question__0DC06FAC0670DA65");
 
             entity.Property(e => e.CorrectAnswer)
-                .HasMaxLength(1)
-                .IsUnicode(false)
-                .IsFixedLength();
+     .HasMaxLength(1000);
+
             entity.Property(e => e.ImageUrl).HasMaxLength(500);
             entity.Property(e => e.Level).HasDefaultValue(1);
             entity.Property(e => e.QuestionType).HasDefaultValue(1);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
 
             entity.HasOne(d => d.Subject).WithMany(p => p.Questions)
                 .HasForeignKey(d => d.SubjectId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Questions__Subje__46E78A0C");
+
+            entity.HasOne(d => d.CreatedByUser).WithMany()
+                .HasForeignKey(d => d.CreatedByUserId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Questions_Users_CreatedBy");
         });
 
         modelBuilder.Entity<Role>(entity =>
@@ -182,13 +191,13 @@ public partial class VnufLearningContext : DbContext
             entity.Property(e => e.StudentCode)
                 .HasMaxLength(20)
                 .IsUnicode(false);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
 
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Users__RoleId__3B75D760");
         });
-
         OnModelCreatingPartial(modelBuilder);
     }
 

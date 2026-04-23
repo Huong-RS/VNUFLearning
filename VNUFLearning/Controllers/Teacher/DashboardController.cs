@@ -4,15 +4,17 @@ using Microsoft.AspNetCore.Mvc;
 namespace VNUFLearning.Controllers.Teacher
 {
     [Authorize(Roles = "GiangVien")]
-
     [Route("Teacher/[controller]/[action]")]
     public class DashboardController : Controller
     {
+        [HttpGet]
+        [Route("~/Teacher")]
         [Route("~/Teacher/Dashboard")]
-        [Route("")]
+        [Route("~/Teacher/Dashboard/Index")]
         public IActionResult Index()
         {
-            return View("~/Views/teacher/Dashboard/Index.cshtml");
+            ViewData["Title"] = "Dashboard Giảng viên";
+            return View("~/Views/Teacher/Dashboard/Index.cshtml");
         }
     }
 }

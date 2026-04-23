@@ -1,53 +1,50 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
 using VNUFLearning.Data;
 
-namespace VNUFLearning
-{
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            var builder = WebApplication.CreateBuilder(args);
-            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+var builder = WebApplication.CreateBuilder(args);
+
+// ❌ QUAN TRỌNG: XÓA EventLog logger gây crash
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
+// Add services
+builder.Services.AddControllersWithViews();
+
+// DB
+builder.Services.AddDbContext<VnufLearningContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Auth
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Account/Login";
         options.AccessDeniedPath = "/Account/Login";
     });
 
-            builder.Services.AddAuthorization();
+var app = builder.Build();
 
-            // Add services to the container.
-            builder.Services.AddControllersWithViews();
-
-            // Cấu hình kết nối SQL Server (Sử dụng chuỗi kết nối từ appsettings.json)
-            builder.Services.AddDbContext<VnufLearningContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-
-            var app = builder.Build();
-
-           
-
-            // Configure the HTTP request pipeline.
-            if (!app.Environment.IsDevelopment())
-            {
-                app.UseExceptionHandler("/Home/Error");
-            }
-            app.UseStaticFiles();
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.UseRouting();
-
-            app.UseAuthorization();
-
-            app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Account}/{action=Login}/{id?}");
-
-            app.Run();
-        }
-    }
+// Middleware
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
 }
+
+// ❌ TẮT HTTPS redirect để tránh lỗi phụ
+// app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Account}/{action=Login}/{id?}");
+
+app.Run();

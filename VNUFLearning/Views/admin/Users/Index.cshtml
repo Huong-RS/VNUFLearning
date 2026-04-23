@@ -7,18 +7,21 @@
 
 <div class="container-fluid mt-2">
 
-    <!-- Tiêu đề và Nút thêm mới -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3 class="fw-bold text-dark mb-1"><i class="fa fa-users-cog text-success me-2"></i> Danh sách Tài khoản</h3>
-            <p class="text-muted small">Quản lý, phân quyền và cấp lại mật khẩu cho hệ thống.</p>
+            <h3 class="fw-bold text-dark mb-1">
+                <i class="fa fa-users-cog text-success me-2"></i> Danh sách Tài khoản
+            </h3>
+            <p class="text-muted small">Quản lý, phân quyền, khóa/mở khóa và cấp lại mật khẩu cho hệ thống.</p>
         </div>
-        <a href="#" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" style="background-color: #005b33;">
+
+        <a href="/Admin/Users/Create"
+           class="btn btn-success fw-bold rounded-pill px-4 shadow-sm"
+           style="background-color: #005b33;">
             <i class="fa fa-user-plus me-1"></i> Cấp tài khoản mới
         </a>
     </div>
 
-    <!-- Thông báo thao tác -->
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success shadow-sm rounded-3 border-0 bg-success bg-opacity-10 text-success fw-bold">
@@ -26,7 +29,6 @@
         </div>
     }
 
-    <!-- Bảng Dữ liệu -->
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -37,6 +39,7 @@
                             <th>Họ và Tên</th>
                             <th>Email</th>
                             <th>Vai trò</th>
+                            <th>Trạng thái</th>
                             <th>Ngày tạo</th>
                             <th class="text-end pe-4">Thao tác</th>
                         </tr>
@@ -44,16 +47,21 @@
                     <tbody>
                         @if (!Model.Any())
                         {
-                            <tr><td colspan="6" class="text-center py-5 text-muted">Chưa có người dùng nào trong hệ thống.</td></tr>
+                            <tr>
+                                <td colspan="7" class="text-center py-5 text-muted">
+                                    Chưa có người dùng nào trong hệ thống.
+                                </td>
+                            </tr>
                         }
+
                         @foreach (var item in Model)
                         {
                             <tr>
                                 <td class="ps-4 fw-bold text-dark">@item.StudentCode</td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <!-- Avatar tạo tự động từ chữ cái đầu của Tên -->
-                                        <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold" style="width: 40px; height: 40px;">
+                                        <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold"
+                                             style="width: 40px; height: 40px;">
                                             @(string.IsNullOrEmpty(item.FullName) ? "U" : item.FullName.Substring(0, 1).ToUpper())
                                         </div>
                                         <div>
@@ -63,7 +71,6 @@
                                 </td>
                                 <td class="text-muted">@(string.IsNullOrEmpty(item.Email) ? "Chưa cập nhật" : item.Email)</td>
                                 <td>
-                                    <!-- Phân loại Badge màu theo Quyền -->
                                     @if (item.Role.RoleName == "Admin")
                                     {
                                         <span class="badge bg-danger rounded-pill px-3 bg-opacity-10 text-danger border border-danger border-opacity-25">Quản trị viên</span>
@@ -77,19 +84,57 @@
                                         <span class="badge bg-success rounded-pill px-3 bg-opacity-10 text-success border border-success border-opacity-25">Sinh viên</span>
                                     }
                                 </td>
+                                <td>
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-success rounded-pill px-3 bg-opacity-10 text-success border border-success border-opacity-25">
+                                            Đang hoạt động
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary rounded-pill px-3 bg-opacity-10 text-secondary border border-secondary border-opacity-25">
+                                            Đã khóa
+                                        </span>
+                                    }
+                                </td>
                                 <td class="text-muted small">
                                     @(item.CreatedAt.HasValue ? item.CreatedAt.Value.ToString("dd/MM/yyyy") : "N/A")
                                 </td>
                                 <td class="text-end pe-4">
                                     <div class="btn-group shadow-sm">
-                                        <!-- Form Reset Mật Khẩu -->
+                                        <a asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-sm btn-outline-primary" title="Chỉnh sửa tài khoản">
+                                            <i class="fa fa-pen"></i>
+                                        </a>
+
                                         <form asp-action="ResetPassword" asp-route-id="@item.UserId" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn đưa mật khẩu của tài khoản @item.StudentCode về mặc định là 123456?');">
+                                            @Html.AntiForgeryToken()
                                             <button type="submit" class="btn btn-sm btn-outline-warning" title="Khôi phục Mật khẩu">
                                                 <i class="fa fa-key"></i>
                                             </button>
                                         </form>
-                                        <!-- Form Xóa Tài Khoản -->
+
+                                        @if (item.IsActive)
+                                        {
+                                            <form asp-action="Lock" asp-route-id="@item.UserId" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn khóa tài khoản @item.StudentCode?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-dark" title="Khóa tài khoản">
+                                                    <i class="fa fa-lock"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="Unlock" asp-route-id="@item.UserId" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn mở khóa tài khoản @item.StudentCode?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-success" title="Mở khóa tài khoản">
+                                                    <i class="fa fa-lock-open"></i>
+                                                </button>
+                                            </form>
+                                        }
+
                                         <form asp-action="Delete" asp-route-id="@item.UserId" method="post" class="d-inline" onsubmit="return confirm('Xóa vĩnh viễn người dùng này khỏi hệ thống?');">
+                                            @Html.AntiForgeryToken()
                                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa tài khoản">
                                                 <i class="fa fa-trash"></i>
                                             </button>
