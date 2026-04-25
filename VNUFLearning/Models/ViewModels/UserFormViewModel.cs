@@ -4,6 +4,9 @@ namespace VNUFLearning.Models.ViewModels
 {
     public class UserFormViewModel
     {
+        public string? ClassName { get; set; }
+
+        public string? DepartmentName { get; set; }
         public int UserId { get; set; }
 
         [Required(ErrorMessage = "Vui lòng nhập mã tài khoản.")]

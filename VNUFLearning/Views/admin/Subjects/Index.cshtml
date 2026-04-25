@@ -3,22 +3,38 @@
 @{
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
     ViewData["Title"] = "Quản lý môn học";
+
+    string keyword = ViewBag.Keyword as string ?? "";
+    string currentDepartment = ViewBag.Department as string ?? "";
+    var departments = ViewBag.Departments as List<string> ?? new List<string>();
 }
 
 <div class="container-fluid mt-2">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
         <div>
-            <h3 class="fw-bold text-dark mb-1">
-                <i class="fa fa-book text-success me-2"></i> Danh sách môn học
-            </h3>
-            <p class="text-muted small">Quản lý các môn học trong hệ thống.</p>
+            <h1 class="fw-bold text-dark mb-2" style="font-size: 2.4rem;">
+                <i class="fa fa-book text-success me-2"></i> Quản lý Môn học
+            </h1>
+            <p class="text-muted mb-0" style="font-size: 1.05rem;">
+                Cấu hình học phần, ảnh bìa, khoa/viện và phân công giảng viên.
+            </p>
         </div>
 
-        <a href="/Admin/Subjects/Create"
-           class="btn btn-success fw-bold rounded-pill px-4 shadow-sm"
-           style="background-color: #005b33;">
-            <i class="fa fa-plus me-1"></i> Thêm môn học
-        </a>
+        <div class="d-flex gap-3">
+            <button type="button"
+                    class="btn btn-light border fw-bold rounded-4 px-4 py-3 shadow-sm text-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#importSubjectModal">
+                <i class="fa fa-file-excel me-2"></i> Import từ Excel
+            </button>
+
+            <a href="/Admin/Subjects/Create"
+               class="btn btn-success fw-bold rounded-4 px-4 py-3 shadow-sm"
+               style="background-color:#005b33;">
+                <i class="fa fa-plus me-2"></i> Tạo môn học mới
+            </a>
+        </div>
     </div>
 
     @if (TempData["Success"] != null)
@@ -28,56 +44,244 @@
         </div>
     }
 
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light text-muted" style="font-size: 0.9rem;">
-                        <tr>
-                            <th class="ps-4 py-3">Mã môn học</th>
-                            <th>Tên môn học</th>
-                            <th>Mô tả</th>
-                            <th class="text-end pe-4">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (!Model.Any())
-                        {
-                            <tr>
-                                <td colspan="4" class="text-center py-5 text-muted">
-                                    Chưa có môn học nào trong hệ thống.
-                                </td>
-                            </tr>
-                        }
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <form method="get" action="/Admin/Subjects">
+                <div class="row g-3 align-items-center">
+                    <div class="col-lg-8">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-white border-end-0 rounded-start-pill">
+                                <i class="fa fa-search text-muted"></i>
+                            </span>
+                            <input type="text"
+                                   name="keyword"
+                                   value="@keyword"
+                                   class="form-control border-start-0 rounded-end-pill"
+                                   placeholder="Tìm theo tên môn, mã học phần..." />
+                        </div>
+                    </div>
 
-                        @foreach (var item in Model)
-                        {
-                            <tr>
-                                <td class="ps-4 fw-bold text-dark">@item.SubjectId</td>
-                                <td class="fw-bold">@item.SubjectName</td>
-                                <td class="text-muted">
-                                    @(string.IsNullOrWhiteSpace(item.Description) ? "Chưa có mô tả" : item.Description)
-                                </td>
-                                <td class="text-end pe-4">
-                                    <div class="btn-group shadow-sm">
-                                        <a asp-action="Edit" asp-route-id="@item.SubjectId" class="btn btn-sm btn-outline-primary" title="Chỉnh sửa môn học">
-                                            <i class="fa fa-pen"></i>
+                    <div class="col-lg-4">
+                        <select name="department" class="form-select form-select-lg rounded-pill">
+                            <option value="">Tất cả Khoa/Viện</option>
+                            @foreach (var dep in departments)
+                            {
+                                if (currentDepartment == dep)
+                                {
+                                    <option value="@dep" selected>@dep</option>
+                                }
+                                else
+                                {
+                                    <option value="@dep">@dep</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-12 d-flex gap-2">
+                        <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold" style="background-color:#005b33;">
+                            <i class="fa fa-filter me-1"></i> Lọc
+                        </button>
+
+                        <a href="/Admin/Subjects" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
+                            <i class="fa fa-rotate-right me-1"></i> Làm mới
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body text-center py-5 text-muted">
+                Chưa có môn học nào phù hợp.
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var item in Model)
+            {
+                var cover = string.IsNullOrWhiteSpace(item.CoverImageUrl)
+                ? "/images/default-subject.jpg"
+                : item.CoverImageUrl;
+
+                <div class="col-md-6 col-xl-4">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 subject-card p-2">
+                        <div class="position-relative">
+                            <img src="@cover"
+                                 class="w-100 rounded-4"
+                                 style="height: 190px; object-fit: cover;"
+                                 alt="@item.SubjectName" />
+
+                            <span class="position-absolute top-0 start-0 m-3 badge rounded-pill bg-white text-dark px-3 py-2 shadow-sm">
+                                <i class="fa fa-star text-warning me-1"></i>
+                                @(item.Credits.HasValue ? $"{item.Credits} tín chỉ" : "Chưa nhập tín chỉ")
+                            </span>
+
+                            <div class="dropdown position-absolute top-0 end-0 m-3">
+                                <button class="btn btn-light rounded-circle shadow-sm"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        style="width:42px;height:42px;">
+                                    <i class="fa fa-ellipsis-vertical"></i>
+                                </button>
+
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                                    <li>
+                                        <a class="dropdown-item" href="/Admin/Subjects/Edit/@item.SubjectId">
+                                            <i class="fa fa-pen text-primary me-2"></i> Sửa môn học
                                         </a>
-
-                                        <form asp-action="Delete" asp-route-id="@item.SubjectId" method="post" class="d-inline"
-                                              onsubmit="return confirm('Bạn có chắc chắn muốn xóa môn học @item.SubjectName?');">
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="/Admin/Subjects/AssignTeacher/@item.SubjectId">
+                                            <i class="fa fa-user-plus text-success me-2"></i> Phân công GV
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <form asp-action="ToggleStatus" asp-route-id="@item.SubjectId" method="post">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa môn học">
-                                                <i class="fa fa-trash"></i>
+                                            <button class="dropdown-item" type="submit">
+                                                @if (item.IsActive)
+                                                {
+                                                    <span><i class="fa fa-eye-slash text-warning me-2"></i> Tạm ẩn</span>
+                                                }
+                                                else
+                                                {
+                                                    <span><i class="fa fa-eye text-success me-2"></i> Mở lại</span>
+                                                }
                                             </button>
                                         </form>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form asp-action="Delete" asp-route-id="@item.SubjectId" method="post"
+                                              onsubmit="return confirm('Bạn có chắc chắn muốn xóa môn học @item.SubjectName?');">
+                                            @Html.AntiForgeryToken()
+                                            <button class="dropdown-item text-danger" type="submit">
+                                                <i class="fa fa-trash me-2"></i> Xóa
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2">
+                                    @(string.IsNullOrWhiteSpace(item.SubjectCode) ? $"MH{item.SubjectId}" : item.SubjectCode)
+                                </span>
+
+                                @if (item.IsActive)
+                                {
+                                    <span class="text-success" title="Đang mở">
+                                        <i class="fa fa-circle"></i>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-danger" title="Đã ẩn">
+                                        <i class="fa fa-circle"></i>
+                                    </span>
+                                }
+                            </div>
+
+                            <h4 class="fw-bold mb-2">@item.SubjectName</h4>
+
+                            <p class="text-muted small mb-3" style="min-height: 42px;">
+                                @(string.IsNullOrWhiteSpace(item.Description) ? "Chưa có mô tả cho môn học này." : item.Description)
+                            </p>
+
+                            <div class="mb-3">
+                                <div class="small text-muted mb-1">
+                                    <i class="fa fa-building me-1"></i> Khoa/Viện
+                                </div>
+                                <div class="fw-bold">
+                                    @(string.IsNullOrWhiteSpace(item.DepartmentName) ? "Chưa cập nhật" : item.DepartmentName)
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="small text-muted mb-2">
+                                    <i class="fa fa-chalkboard-user me-1"></i> Giảng viên phụ trách
+                                </div>
+
+                                @if (item.SubjectAssignments != null && item.SubjectAssignments.Any())
+                                {
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (var assignment in item.SubjectAssignments)
+                                        {
+                                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 py-2">
+                                                @assignment.Teacher.FullName
+                                            </span>
+                                        }
                                     </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Chưa phân công</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }<div class="modal fade" id="importSubjectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fa fa-file-excel text-success me-2"></i> Import môn học từ Excel
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form action="/Admin/Subjects/ImportExcel" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Chọn file Excel (.xlsx)</label>
+                            <input type="file" name="excelFile" class="form-control" accept=".xlsx" required />
+                        </div>
+
+                        <div class="alert alert-light border small">
+                            <strong>Cấu trúc cột:</strong><br />
+                            SubjectCode | SubjectName | Credits | DepartmentName | Description
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <a href="/Admin/Subjects/DownloadTemplate" class="btn btn-outline-success">
+                            <i class="fa fa-download me-1"></i> Tải mẫu
+                        </a>
+
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Hủy
+                        </button>
+
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-upload me-1"></i> Import
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .subject-card {
+        transition: all .2s ease;
+    }
+
+        .subject-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0,0,0,.12) !important;
+        }
+</style>

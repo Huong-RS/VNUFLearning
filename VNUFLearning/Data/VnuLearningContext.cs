@@ -10,7 +10,7 @@ public partial class VnufLearningContext : DbContext
     public VnufLearningContext()
     {
     }
-
+    public virtual DbSet<SubjectAssignment> SubjectAssignments { get; set; }
     public VnufLearningContext(DbContextOptions<VnufLearningContext> options)
         : base(options)
     {
@@ -37,6 +37,26 @@ public partial class VnufLearningContext : DbContext
    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<SubjectAssignment>(entity =>
+        {
+            entity.HasKey(e => e.AssignmentId);
+
+            entity.Property(e => e.AssignedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Subject)
+                .WithMany(p => p.SubjectAssignments)
+                .HasForeignKey(d => d.SubjectId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_SubjectAssignments_Subjects");
+
+            entity.HasOne(d => d.Teacher)
+                .WithMany(p => p.SubjectAssignments)
+                .HasForeignKey(d => d.TeacherId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_SubjectAssignments_Users");
+        });
         modelBuilder.Entity<BlogPost>(entity =>
         {
             entity.HasKey(e => e.PostId).HasName("PK__BlogPost__AA126018EE206CC6");
@@ -87,7 +107,11 @@ public partial class VnufLearningContext : DbContext
                 .HasForeignKey(d => d.SubjectId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Documents__Subje__412EB0B6");
-
+            entity.Property(e => e.FileName).HasMaxLength(255);
+            entity.Property(e => e.FileType).HasMaxLength(50);
+            entity.Property(e => e.FileSize);
+            entity.Property(e => e.DownloadCount).HasDefaultValue(0);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.HasOne(d => d.UploadedByNavigation).WithMany(p => p.Documents)
                 .HasForeignKey(d => d.UploadedBy)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -170,12 +194,23 @@ public partial class VnufLearningContext : DbContext
         {
             entity.HasKey(e => e.SubjectId).HasName("PK__Subjects__AC1BA3A842BECB86");
 
-            entity.Property(e => e.Description).HasMaxLength(500);
             entity.Property(e => e.SubjectName).HasMaxLength(100);
+
+            entity.Property(e => e.SubjectCode).HasMaxLength(30);
+
+            entity.Property(e => e.Description).HasMaxLength(500);
+
+            entity.Property(e => e.DepartmentName).HasMaxLength(100);
+
+            entity.Property(e => e.CoverImageUrl).HasMaxLength(500);
+
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
         });
 
         modelBuilder.Entity<User>(entity =>
         {
+            entity.Property(e => e.ClassName).HasMaxLength(50);
+            entity.Property(e => e.DepartmentName).HasMaxLength(100);
             entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4CD6F29042");
 
             entity.HasIndex(e => e.StudentCode, "UQ__Users__1FC886047F5AAFA0").IsUnique();

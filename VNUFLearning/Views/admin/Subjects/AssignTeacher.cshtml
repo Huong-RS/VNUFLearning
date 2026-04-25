@@ -1,0 +1,92 @@
+﻿@model VNUFLearning.Models.ViewModels.AssignTeacherViewModel
+
+@{
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    ViewData["Title"] = "Phân công giảng viên";
+}
+
+<div class="container-fluid mt-2">
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-1">
+            <i class="fa fa-user-plus text-success me-2"></i> Phân công giảng viên
+        </h3>
+        <p class="text-muted small mb-0">
+            Môn học: <strong>@Model.SubjectName</strong>
+        </p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <form method="post" action="/Admin/Subjects/AssignTeacher/@Model.SubjectId">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="SubjectId" />
+                        <input type="hidden" asp-for="SubjectName" />
+
+                        <label class="form-label fw-bold">Chọn giảng viên phụ trách</label>
+                        <div class="border rounded-4 p-3 bg-light" style="max-height: 350px; overflow-y: auto;">
+                            @if (Model.AvailableTeachers != null && Model.AvailableTeachers.Any())
+                            {
+                                @foreach (var teacher in Model.AvailableTeachers)
+                                {
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               name="SelectedTeacherIds"
+                                               value="@teacher.UserId"
+                                               id="teacher_@teacher.UserId"
+                                        @(Model.SelectedTeacherIds.Contains(teacher.UserId) ? "checked" : "") />
+
+                                        <label class="form-check-label" for="teacher_@teacher.UserId">
+                                            <span class="fw-bold">@teacher.FullName</span>
+                                            <span class="text-muted">(@teacher.StudentCode)</span>
+                                        </label>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-muted">Chưa có giảng viên nào trong hệ thống.</div>
+                            }
+                        </div>
+
+                        <div class="mt-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-success px-4">
+                                <i class="fa fa-save me-1"></i> Lưu phân công
+                            </button>
+                            <a href="/Admin/Subjects" class="btn btn-outline-secondary px-4">
+                                <i class="fa fa-arrow-left me-1"></i> Quay lại
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Giảng viên đang phụ trách</h5>
+
+                    @if (Model.AssignedTeachers != null && Model.AssignedTeachers.Any())
+                    {
+                        <div class="d-flex flex-column gap-2">
+                            @foreach (var teacher in Model.AssignedTeachers)
+                            {
+                                <div class="border rounded-3 px-3 py-2 bg-light">
+                                    <div class="fw-bold">@teacher.FullName</div>
+                                    <div class="text-muted small">@teacher.StudentCode - @teacher.Email</div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted">Môn học này chưa được phân công cho giảng viên nào.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -3,6 +3,16 @@
 @{
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
     ViewData["Title"] = "Quản lý Tài khoản";
+
+    string currentRole = ViewBag.CurrentRole as string ?? "";
+    string currentKeyword = ViewBag.CurrentKeyword as string ?? "";
+    string currentStatus = ViewBag.CurrentStatus as string ?? "";
+
+    int totalUsers = ViewBag.TotalUsers ?? 0;
+    int totalStudents = ViewBag.TotalStudents ?? 0;
+    int totalTeachers = ViewBag.TotalTeachers ?? 0;
+    int totalAdmins = ViewBag.TotalAdmins ?? 0;
+    int totalLocked = ViewBag.TotalLocked ?? 0;
 }
 
 <div class="container-fluid mt-2">
@@ -10,16 +20,32 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h3 class="fw-bold text-dark mb-1">
-                <i class="fa fa-users-cog text-success me-2"></i> Danh sách Tài khoản
+                <i class="fa fa-users-cog text-success me-2"></i> Quản lý tài khoản
             </h3>
-            <p class="text-muted small">Quản lý, phân quyền, khóa/mở khóa và cấp lại mật khẩu cho hệ thống.</p>
+            <p class="text-muted small mb-0">
+                Theo dõi, tìm kiếm, khóa/mở khóa và quản trị người dùng trong hệ thống.
+            </p>
         </div>
 
-        <a href="/Admin/Users/Create"
-           class="btn btn-success fw-bold rounded-pill px-4 shadow-sm"
-           style="background-color: #005b33;">
-            <i class="fa fa-user-plus me-1"></i> Cấp tài khoản mới
-        </a>
+        <div class="d-flex gap-2">
+            <a href="/Admin/Users/DownloadTemplate"
+               class="btn btn-outline-secondary fw-bold rounded-pill px-4 shadow-sm">
+                <i class="fa fa-download me-1"></i> Tải file mẫu
+            </a>
+
+            <button type="button"
+                    class="btn btn-outline-primary fw-bold rounded-pill px-4 shadow-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#importExcelModal">
+                <i class="fa fa-file-import me-1"></i> Import Excel
+            </button>
+
+            <a href="/Admin/Users/Create"
+               class="btn btn-success fw-bold rounded-pill px-4 shadow-sm"
+               style="background-color: #005b33;">
+                <i class="fa fa-user-plus me-1"></i> Cấp tài khoản mới
+            </a>
+        </div>
     </div>
 
     @if (TempData["Success"] != null)
@@ -29,15 +55,165 @@
         </div>
     }
 
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex justify-content-between align-items-center p-4">
+                    <div>
+                        <div class="text-uppercase small fw-bold text-muted">Tổng tài khoản</div>
+                        <div class="display-6 fw-bold text-dark">@totalUsers</div>
+                    </div>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:64px;height:64px;background:#f3f4f6;color:#4b5563;">
+                        <i class="fa fa-users fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100"
+                 style="background: linear-gradient(135deg, #eefaf3, #f7fffa);">
+                <div class="card-body d-flex justify-content-between align-items-center p-4">
+                    <div>
+                        <div class="text-uppercase small fw-bold text-success">Sinh viên</div>
+                        <div class="display-6 fw-bold text-dark">@totalStudents</div>
+                    </div>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:64px;height:64px;background:#dcfce7;color:#16a34a;">
+                        <i class="fa fa-user-graduate fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100"
+                 style="background: linear-gradient(135deg, #eef4ff, #f8fbff);">
+                <div class="card-body d-flex justify-content-between align-items-center p-4">
+                    <div>
+                        <div class="text-uppercase small fw-bold text-primary">Giảng viên</div>
+                        <div class="display-6 fw-bold text-dark">@totalTeachers</div>
+                    </div>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:64px;height:64px;background:#dbeafe;color:#2563eb;">
+                        <i class="fa fa-chalkboard-user fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100"
+                 style="background: linear-gradient(135deg, #fff5f5, #fffafa);">
+                <div class="card-body d-flex justify-content-between align-items-center p-4">
+                    <div>
+                        <div class="text-uppercase small fw-bold text-danger">Bị khóa / cảnh báo</div>
+                        <div class="display-6 fw-bold text-dark">@totalLocked</div>
+                    </div>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:64px;height:64px;background:#fee2e2;color:#e11d48;">
+                        <i class="fa fa-user-lock fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <div class="card-body p-4">
+            <form method="get" action="/Admin/Users">
+                <div class="row g-3 align-items-end">
+                    <div class="col-lg-7">
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="/Admin/Users"
+                               class="btn @(string.IsNullOrEmpty(currentRole) ? "btn-success" : "btn-outline-secondary") rounded-pill fw-bold">
+                                Tất cả <span class="ms-1 badge bg-light text-dark">@totalUsers</span>
+                            </a>
+
+                            <a href="/Admin/Users?role=SinhVien"
+                               class="btn @(currentRole == "SinhVien" ? "btn-success" : "btn-outline-secondary") rounded-pill fw-bold">
+                                Sinh viên <span class="ms-1 badge bg-light text-dark">@totalStudents</span>
+                            </a>
+
+                            <a href="/Admin/Users?role=GiangVien"
+                               class="btn @(currentRole == "GiangVien" ? "btn-success" : "btn-outline-secondary") rounded-pill fw-bold">
+                                Giảng viên <span class="ms-1 badge bg-light text-dark">@totalTeachers</span>
+                            </a>
+
+                            <a href="/Admin/Users?role=Admin"
+                               class="btn @(currentRole == "Admin" ? "btn-success" : "btn-outline-secondary") rounded-pill fw-bold">
+                                Quản trị viên <span class="ms-1 badge bg-light text-dark">@totalAdmins</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2">
+                        <label class="form-label fw-bold small text-muted">Trạng thái</label>
+                        <select name="status" class="form-select rounded-pill">
+                            <option value="">Tất cả</option>
+                            @if (currentStatus == "active")
+                            {
+                                <option value="active" selected>Đang hoạt động</option>
+                            }
+                            else
+                            {
+                                <option value="active">Đang hoạt động</option>
+                            }
+
+                            @if (currentStatus == "locked")
+                            {
+                                <option value="locked" selected>Đã khóa</option>
+                            }
+                            else
+                            {
+                                <option value="locked">Đã khóa</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-lg-3">
+                        <label class="form-label fw-bold small text-muted">Tìm kiếm</label>
+                        <input type="hidden" name="role" value="@currentRole" />
+                        <div class="input-group">
+                            <span class="input-group-text bg-white rounded-start-pill border-end-0">
+                                <i class="fa fa-search text-muted"></i>
+                            </span>
+                            <input type="text"
+                                   name="keyword"
+                                   value="@currentKeyword"
+                                   class="form-control border-start-0 rounded-end-pill"
+                                   placeholder="Tìm theo tên, MSV, email..." />
+                        </div>
+                    </div>
+
+                    <div class="col-12 d-flex gap-2 pt-2">
+                        <button type="submit"
+                                class="btn btn-success rounded-pill px-4 fw-bold"
+                                style="background-color:#005b33;">
+                            <i class="fa fa-filter me-1"></i> Lọc
+                        </button>
+
+                        <a href="/Admin/Users"
+                           class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
+                            <i class="fa fa-rotate-right me-1"></i> Làm mới
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light text-muted" style="font-size: 0.9rem;">
+                <table class="table align-middle mb-0">
+                    <thead class="bg-light text-muted" style="font-size: 0.95rem;">
                         <tr>
-                            <th class="ps-4 py-3">Tài khoản (MSV/MGV)</th>
-                            <th>Họ và Tên</th>
-                            <th>Email</th>
+                            <th class="ps-4 py-3">Thông tin người dùng</th>
+                            <th>Mã định danh (MSV/MGV)</th>
+                            <th>Lớp</th>
+                            <th>Khoa / Viện / Bộ môn</th>
                             <th>Vai trò</th>
                             <th>Trạng thái</th>
                             <th>Ngày tạo</th>
@@ -48,94 +224,174 @@
                         @if (!Model.Any())
                         {
                             <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">
-                                    Chưa có người dùng nào trong hệ thống.
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    Không có người dùng phù hợp với bộ lọc hiện tại.
                                 </td>
                             </tr>
                         }
 
                         @foreach (var item in Model)
                         {
+                            var firstLetter = string.IsNullOrWhiteSpace(item.FullName)
+                            ? "U"
+                            : item.FullName.Substring(0, 1).ToUpper();
+
+                            var avatarBg = item.Role.RoleName switch
+                            {
+                                "Admin" => "#fee2e2",
+                                "GiangVien" => "#dbeafe",
+                                _ => "#dcfce7"
+                            };
+
+                            var avatarColor = item.Role.RoleName switch
+                            {
+                                "Admin" => "#e11d48",
+                                "GiangVien" => "#2563eb",
+                                _ => "#16a34a"
+                            };
+
                             <tr>
-                                <td class="ps-4 fw-bold text-dark">@item.StudentCode</td>
-                                <td>
+                                <td class="ps-4">
                                     <div class="d-flex align-items-center">
-                                        <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold"
-                                             style="width: 40px; height: 40px;">
-                                            @(string.IsNullOrEmpty(item.FullName) ? "U" : item.FullName.Substring(0, 1).ToUpper())
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold me-3"
+                                             style="width:52px;height:52px;background:@avatarBg;color:@avatarColor;">
+                                            @firstLetter
                                         </div>
                                         <div>
-                                            <div class="fw-bold text-dark">@item.FullName</div>
+                                            <div class="fw-bold text-dark fs-6">@item.FullName</div>
+                                            <div class="text-muted">@item.Email</div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="text-muted">@(string.IsNullOrEmpty(item.Email) ? "Chưa cập nhật" : item.Email)</td>
+
+                                <td class="fw-bold text-dark">@item.StudentCode</td>
+
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(item.ClassName))
+                                    {
+                                        <span class="badge rounded-pill px-3 py-2 bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                                            @item.ClassName
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">—</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(item.DepartmentName))
+                                    {
+                                        <span class="text-dark">@item.DepartmentName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">—</span>
+                                    }
+                                </td>
+
                                 <td>
                                     @if (item.Role.RoleName == "Admin")
                                     {
-                                        <span class="badge bg-danger rounded-pill px-3 bg-opacity-10 text-danger border border-danger border-opacity-25">Quản trị viên</span>
+                                        <span class="badge rounded-pill px-3 py-2 bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">
+                                            <i class="fa fa-user-shield me-1"></i> Quản trị viên
+                                        </span>
                                     }
                                     else if (item.Role.RoleName == "GiangVien")
                                     {
-                                        <span class="badge bg-primary rounded-pill px-3 bg-opacity-10 text-primary border border-primary border-opacity-25">Giảng viên</span>
+                                        <span class="badge rounded-pill px-3 py-2 bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
+                                            <i class="fa fa-chalkboard-user me-1"></i> Giảng viên
+                                        </span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-success rounded-pill px-3 bg-opacity-10 text-success border border-success border-opacity-25">Sinh viên</span>
+                                        <span class="badge rounded-pill px-3 py-2 bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                                            <i class="fa fa-user-graduate me-1"></i> Sinh viên
+                                        </span>
                                     }
                                 </td>
+
                                 <td>
                                     @if (item.IsActive)
                                     {
-                                        <span class="badge bg-success rounded-pill px-3 bg-opacity-10 text-success border border-success border-opacity-25">
-                                            Đang hoạt động
+                                        <span class="fw-bold text-success">
+                                            <i class="fa fa-circle me-1" style="font-size:8px;"></i> Đang hoạt động
                                         </span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-secondary rounded-pill px-3 bg-opacity-10 text-secondary border border-secondary border-opacity-25">
-                                            Đã khóa
+                                        <span class="fw-bold text-danger">
+                                            <i class="fa fa-circle me-1" style="font-size:8px;"></i> Đã khóa
                                         </span>
                                     }
                                 </td>
+
                                 <td class="text-muted small">
                                     @(item.CreatedAt.HasValue ? item.CreatedAt.Value.ToString("dd/MM/yyyy") : "N/A")
                                 </td>
+
                                 <td class="text-end pe-4">
                                     <div class="btn-group shadow-sm">
-                                        <a asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-sm btn-outline-primary" title="Chỉnh sửa tài khoản">
+                                        <a asp-action="Edit"
+                                           asp-route-id="@item.UserId"
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="Chỉnh sửa tài khoản">
                                             <i class="fa fa-pen"></i>
                                         </a>
 
-                                        <form asp-action="ResetPassword" asp-route-id="@item.UserId" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn đưa mật khẩu của tài khoản @item.StudentCode về mặc định là 123456?');">
+                                        <form asp-action="ResetPassword"
+                                              asp-route-id="@item.UserId"
+                                              method="post"
+                                              class="d-inline"
+                                              onsubmit="return confirm('Bạn có chắc chắn muốn đưa mật khẩu của tài khoản @item.StudentCode về mặc định là 123456?');">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Khôi phục Mật khẩu">
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-warning"
+                                                    title="Khôi phục mật khẩu">
                                                 <i class="fa fa-key"></i>
                                             </button>
                                         </form>
 
                                         @if (item.IsActive)
                                         {
-                                            <form asp-action="Lock" asp-route-id="@item.UserId" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn khóa tài khoản @item.StudentCode?');">
+                                            <form asp-action="Lock"
+                                                  asp-route-id="@item.UserId"
+                                                  method="post"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('Bạn có chắc chắn muốn khóa tài khoản @item.StudentCode?');">
                                                 @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-sm btn-outline-dark" title="Khóa tài khoản">
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-dark"
+                                                        title="Khóa tài khoản">
                                                     <i class="fa fa-lock"></i>
                                                 </button>
                                             </form>
                                         }
                                         else
                                         {
-                                            <form asp-action="Unlock" asp-route-id="@item.UserId" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn mở khóa tài khoản @item.StudentCode?');">
+                                            <form asp-action="Unlock"
+                                                  asp-route-id="@item.UserId"
+                                                  method="post"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('Bạn có chắc chắn muốn mở khóa tài khoản @item.StudentCode?');">
                                                 @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-sm btn-outline-success" title="Mở khóa tài khoản">
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-success"
+                                                        title="Mở khóa tài khoản">
                                                     <i class="fa fa-lock-open"></i>
                                                 </button>
                                             </form>
                                         }
 
-                                        <form asp-action="Delete" asp-route-id="@item.UserId" method="post" class="d-inline" onsubmit="return confirm('Xóa vĩnh viễn người dùng này khỏi hệ thống?');">
+                                        <form asp-action="Delete"
+                                              asp-route-id="@item.UserId"
+                                              method="post"
+                                              class="d-inline"
+                                              onsubmit="return confirm('Xóa vĩnh viễn người dùng này khỏi hệ thống?');">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa tài khoản">
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    title="Xóa tài khoản">
                                                 <i class="fa fa-trash"></i>
                                             </button>
                                         </form>
@@ -145,6 +401,61 @@
                         }
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="importExcelModal" tabindex="-1" aria-labelledby="importExcelModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="importExcelModalLabel">
+                        <i class="fa fa-file-import text-primary me-2"></i> Import tài khoản từ Excel
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <form asp-action="ImportExcel" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Loại tài khoản cần import</label>
+                            <select name="importRole" class="form-select" required>
+                                <option value="">-- Chọn loại tài khoản --</option>
+                                <option value="SinhVien">Sinh viên</option>
+                                <option value="GiangVien">Giảng viên</option>
+                            </select>
+                            <div class="form-text">
+                                Admin không được import hàng loạt, chỉ tạo thủ công.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Chọn file Excel (.xlsx)</label>
+                            <input type="file" name="excelFile" class="form-control" accept=".xlsx" required />
+                        </div>
+
+                        <div class="alert alert-light border rounded-3 small mb-0">
+                            <div class="fw-bold mb-2">Cấu trúc file Excel:</div>
+                            <div>1. StudentCode</div>
+                            <div>2. FullName</div>
+                            <div>3. Email</div>
+                            <div>4. ClassName</div>
+                            <div>5. DepartmentName</div>
+                            <hr />
+                            <div>Mật khẩu mặc định sau khi import: <strong>123456</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                            Hủy
+                        </button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">
+                            <i class="fa fa-upload me-1"></i> Xác nhận import
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

@@ -1,0 +1,274 @@
+﻿@model IEnumerable<VNUFLearning.Models.Document>
+
+@{
+    Layout = "~/Views/Shared/_LayoutTeacher.cshtml";
+    ViewData["Title"] = "Tài liệu học tập";
+
+    var subjects = ViewBag.Subjects as List<VNUFLearning.Models.Subject> ?? new();
+
+    long totalStorage = ViewBag.TotalStorage ?? 0;
+
+    string FormatSize(long size)
+    {
+        if (size >= 1024 * 1024 * 1024) return $"{size / 1024.0 / 1024 / 1024:0.##} GB";
+        if (size >= 1024 * 1024) return $"{size / 1024.0 / 1024:0.##} MB";
+        return $"{size / 1024.0:0.##} KB";
+    }
+}
+
+<div class="container-fluid mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold text-dark mb-2">
+                <i class="fa fa-folder-open text-success me-2"></i> Tài liệu học tập
+            </h1>
+            <p class="text-muted fs-5 mb-0">
+                Quản lý tài liệu cho các môn học bạn được phân công phụ trách.
+            </p>
+        </div>
+
+        <button class="btn btn-success rounded-4 px-4 py-3 fw-bold shadow"
+                data-bs-toggle="modal"
+                data-bs-target="#uploadModal"
+                style="background:#005b33;"
+        @(subjects.Any() ? "" : "disabled")>
+            <i class="fa fa-cloud-upload-alt me-2"></i> Tải lên tài liệu
+        </button>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success fw-bold rounded-4">
+            <i class="fa fa-check-circle me-2"></i>@TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger fw-bold rounded-4">
+            <i class="fa fa-triangle-exclamation me-2"></i>@TempData["Error"]
+        </div>
+    }
+
+    @if (!subjects.Any())
+    {
+        <div class="alert alert-warning rounded-4 fw-bold">
+            Bạn chưa được Admin phân công môn học nào, nên chưa thể upload tài liệu.
+        </div>
+    }
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-blue">
+                    <i class="fa fa-file-alt"></i>
+                </div>
+                <div>
+                    <div class="stat-label">TÀI LIỆU TRONG MÔN PHỤ TRÁCH</div>
+                    <div class="stat-value">@ViewBag.TotalDocuments</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-green">
+                    <i class="fa fa-book-open"></i>
+                </div>
+                <div>
+                    <div class="stat-label">DUNG LƯỢNG</div>
+                    <div class="stat-value">@FormatSize(totalStorage)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="stat-card highlight">
+                <div class="stat-icon bg-orange">
+                    <i class="fa fa-chart-bar"></i>
+                </div>
+                <div>
+                    <div class="stat-label">TÀI LIỆU CỦA TÔI</div>
+                    <div class="stat-value">@ViewBag.MyUploads</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body">
+            <form method="get" action="/Teacher/Documents">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <input name="keyword"
+                               class="form-control rounded-pill"
+                               placeholder="Tìm tên tài liệu..."
+                               value="@ViewBag.Keyword" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <select name="subjectId" class="form-select rounded-pill">
+                            <option value="">Tất cả môn được phân công</option>
+                            @foreach (var s in subjects)
+                            {
+                                <option value="@s.SubjectId" selected="@(ViewBag.SubjectId == s.SubjectId)">
+                                    @s.SubjectName
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <button class="btn btn-success rounded-pill px-4 fw-bold">
+                            <i class="fa fa-filter me-1"></i> Lọc
+                        </button>
+                        <a href="/Teacher/Documents" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
+                            Làm mới
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="bg-light text-muted">
+                    <tr>
+                        <th class="ps-4">Tên tài liệu</th>
+                        <th>Môn học</th>
+                        <th>Người tải lên</th>
+                        <th>Ngày tải</th>
+                        <th>Lượt tải</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                Chưa có tài liệu nào.
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var item in Model)
+                    {
+                        var type = (item.FileType ?? "").ToLower();
+                        var icon = type switch
+                        {
+                            "pdf" => "fa-file-pdf text-danger",
+                            "doc" or "docx" => "fa-file-word text-primary",
+                            "ppt" or "pptx" => "fa-file-powerpoint text-warning",
+                            "zip" or "rar" => "fa-file-zipper text-warning",
+                            "xls" or "xlsx" => "fa-file-excel text-success",
+                            _ => "fa-file text-secondary"
+                        };
+
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-4 d-flex align-items-center justify-content-center me-3"
+                                         style="width:56px;height:56px;background:#f3f4f6;">
+                                        <i class="fa @icon fs-3"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold fs-6">@item.Title</div>
+                                        <div class="text-muted small">@FormatSize(item.FileSize ?? 0)</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                <span class="badge bg-light text-dark border rounded-3 px-3 py-2">
+                                    @item.Subject.SubjectName
+                                </span>
+                            </td>
+
+                            <td>@item.UploadedByNavigation.FullName</td>
+
+                            <td>@item.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+
+                            <td>@item.DownloadCount</td>
+
+                            <td class="text-end pe-4">
+                                <a href="/Teacher/Documents/ViewFile/@item.DocumentId"
+                                   target="_blank"
+                                   class="btn btn-sm btn-outline-secondary rounded-3"
+                                   title="Xem">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+
+                                <a href="/Teacher/Documents/Download/@item.DocumentId"
+                                   class="btn btn-sm btn-success rounded-3"
+                                   title="Tải xuống">
+                                    <i class="fa fa-download"></i>
+                                </a>
+
+                                @if (User.FindFirst("UserId")?.Value == item.UploadedBy.ToString())
+                                {
+                                    <form action="/Teacher/Documents/Delete/@item.DocumentId"
+                                          method="post"
+                                          class="d-inline"
+                                          onsubmit="return confirm('Bạn có chắc muốn xóa tài liệu này?');">
+                                        @Html.AntiForgeryToken()
+                                        <button class="btn btn-sm btn-danger rounded-3" title="Xóa">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">
+                    <i class="fa fa-cloud-upload-alt text-success me-2"></i> Tải lên tài liệu
+                </h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form action="/Teacher/Documents/Upload" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Chọn file tài liệu</label>
+                        <input type="file" name="file" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Môn học</label>
+                        <select name="subjectId" class="form-select" required>
+                            <option value="">-- Chọn môn học --</option>
+                            @foreach (var s in subjects)
+                            {
+                                <option value="@s.SubjectId">@s.SubjectName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="alert alert-light border small mb-0">
+                        Bạn chỉ được upload tài liệu cho các môn học đã được Admin phân công.
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button class="btn btn-success">
+                        <i class="fa fa-upload me-1"></i> Tải lên
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

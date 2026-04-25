@@ -38,7 +38,17 @@
                         <input asp-for="Email" class="form-control" />
                         <span asp-validation-for="Email" class="text-danger small"></span>
                     </div>
+                    <div class="mb-3">
+                        <label asp-for="ClassName" class="form-label fw-bold">Lớp</label>
+                        <input asp-for="ClassName" class="form-control" placeholder="Ví dụ: K67CNTT" />
+                        <span asp-validation-for="ClassName" class="text-danger small"></span>
+                    </div>
 
+                    <div class="mb-3">
+                        <label asp-for="DepartmentName" class="form-label fw-bold">Khoa / Viện / Bộ môn</label>
+                        <input asp-for="DepartmentName" class="form-control" placeholder="Ví dụ: Khoa Công nghệ thông tin" />
+                        <span asp-validation-for="DepartmentName" class="text-danger small"></span>
+                    </div>
                     <div class="col-md-6">
                         <label asp-for="RoleId" class="form-label fw-bold"></label>
                         <select asp-for="RoleId" asp-items="ViewBag.RoleId" class="form-select">
