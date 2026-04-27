@@ -1,0 +1,146 @@
+﻿@model IEnumerable<VNUFLearning.Models.Document>
+
+@{
+    Layout = "~/Views/Shared/_LayoutStudent.cshtml";
+    ViewData["Title"] = "Thư viện học liệu";
+
+    var subjects = ViewBag.Subjects as List<VNUFLearning.Models.Subject> ?? new();
+    var displayName = User?.FindFirst("FullName")?.Value ?? User?.Identity?.Name ?? "Sinh viên";
+
+    string FormatSize(long size)
+    {
+        if (size >= 1024 * 1024) return $"{size / 1024.0 / 1024:0.##} MB";
+        return $"{size / 1024.0:0.##} KB";
+    }
+
+    string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "SV";
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1) return parts[0].Substring(0, 1).ToUpper();
+        return (parts[^2].Substring(0, 1) + parts[^1].Substring(0, 1)).ToUpper();
+    }
+}
+
+<div class="student-library-page">
+
+    <div class="library-hero">
+        <div>
+            <h1>Xin chào, @displayName! <span>👋</span></h1>
+            <p>
+                Bạn có thể tìm kiếm, đọc trực tiếp và tải về các tài liệu bài giảng,
+                đề cương ôn tập được cung cấp chính thức bởi giảng viên.
+            </p>
+        </div>
+    </div>
+
+    <div class="library-filter-card">
+        <form method="get" action="/Student/Documents" class="library-filter-form">
+            <div class="search-box">
+                <i class="fa fa-search"></i>
+                <input name="keyword"
+                       value="@ViewBag.Keyword"
+                       placeholder="Tìm kiếm tài liệu..." />
+            </div>
+
+            <div class="subject-box">
+                <i class="fa fa-layer-group"></i>
+                <select name="subjectId">
+                    <option value="">Lọc theo: Tất cả môn học</option>
+                    @foreach (var s in subjects)
+                    {
+                        <option value="@s.SubjectId" selected="@(ViewBag.SubjectId == s.SubjectId)">
+                            @s.SubjectName
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <button class="search-btn" type="submit">
+                Tìm kiếm
+            </button>
+        </form>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-docs">
+            <i class="fa fa-folder-open"></i>
+            <h4>Chưa có tài liệu phù hợp</h4>
+            <p>Hãy thử đổi từ khóa tìm kiếm hoặc chọn môn học khác.</p>
+        </div>
+    }
+    else
+    {
+        <div class="doc-grid">
+            @foreach (var item in Model)
+            {
+                var type = (item.FileType ?? "").ToLower();
+
+                var iconClass = type switch
+                {
+                    "pdf" => "fa-file-pdf",
+                    "doc" or "docx" => "fa-file-word",
+                    "ppt" or "pptx" => "fa-file-powerpoint",
+                    "xls" or "xlsx" => "fa-file-excel",
+                    "zip" or "rar" => "fa-file-zipper",
+                    _ => "fa-file"
+                };
+
+                var typeClass = type switch
+                {
+                    "pdf" => "doc-pdf",
+                    "doc" or "docx" => "doc-word",
+                    "ppt" or "pptx" => "doc-ppt",
+                    "xls" or "xlsx" => "doc-excel",
+                    "zip" or "rar" => "doc-zip",
+                    _ => "doc-default"
+                };
+
+                <div class="doc-card">
+                    <div class="doc-top">
+                        <div class="doc-file-icon @typeClass">
+                            <i class="fa @iconClass"></i>
+                        </div>
+
+                        <span class="subject-badge">
+                            @item.Subject.SubjectName
+                        </span>
+                    </div>
+
+                    <h3 title="@item.Title">
+                        @item.Title
+                    </h3>
+
+                    <div class="doc-divider"></div>
+
+                    <div class="doc-meta">
+                        <div class="uploader">
+                            <span class="avatar-mini">
+                                @GetInitials(item.UploadedByNavigation?.FullName)
+                            </span>
+                            <span>@item.UploadedByNavigation?.FullName</span>
+                        </div>
+
+                        <span class="file-size">
+                            @FormatSize(item.FileSize ?? 0)
+                        </span>
+                    </div>
+
+                    <div class="doc-actions">
+                        <a href="/Student/Documents/ViewFile/@item.DocumentId"
+                           target="_blank"
+                           class="preview-btn">
+                            <i class="fa fa-eye"></i> Xem trước
+                        </a>
+
+                        <a href="/Student/Documents/Download/@item.DocumentId"
+                           class="download-btn">
+                            <i class="fa fa-download"></i>
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

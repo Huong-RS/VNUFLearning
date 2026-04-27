@@ -26,7 +26,6 @@
 
 	<ItemGroup>
 	  <Folder Include="Views\Admin\Blog\" />
-	  <Folder Include="wwwroot\templates\" />
 	  <Folder Include="wwwroot\uploads\documents\" />
 	</ItemGroup>
 

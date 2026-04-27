@@ -37,6 +37,58 @@ public partial class VnufLearningContext : DbContext
    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Exam>(entity =>
+        {
+            entity.Property(e => e.ExamType).HasDefaultValue(1);
+
+            entity.Property(e => e.ChapterFrom).HasMaxLength(100);
+
+            entity.Property(e => e.ChapterTo).HasMaxLength(100);
+
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.HasKey(e => e.ExamId);
+
+            entity.Property(e => e.Title).HasMaxLength(200);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.Property(e => e.DurationMinutes).HasDefaultValue(45);
+
+            entity.Property(e => e.TotalQuestions).HasDefaultValue(20);
+
+            entity.Property(e => e.IsPublished).HasDefaultValue(false);
+
+            entity.HasOne(e => e.Subject)
+                .WithMany(s => s.Exams)
+                .HasForeignKey(e => e.SubjectId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Exams_Subject");
+
+            entity.HasOne(e => e.Teacher)
+                .WithMany(u => u.Exams)
+                .HasForeignKey(e => e.TeacherId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Exams_Teacher");
+        });
+
+        modelBuilder.Entity<ExamQuestion>(entity =>
+        {
+            entity.HasKey(e => e.ExamQuestionId);
+
+            entity.HasOne(e => e.Exam)
+                .WithMany(e => e.ExamQuestions)
+                .HasForeignKey(e => e.ExamId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ExamQuestions_Exam");
+
+            entity.HasOne(e => e.Question)
+                .WithMany(q => q.ExamQuestions)
+                .HasForeignKey(e => e.QuestionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ExamQuestions_Question");
+        });
         modelBuilder.Entity<SubjectAssignment>(entity =>
         {
             entity.HasKey(e => e.AssignmentId);
@@ -135,6 +187,10 @@ public partial class VnufLearningContext : DbContext
 
         modelBuilder.Entity<ExamResult>(entity =>
         {
+            entity.HasOne(d => d.Exam)
+    .WithMany(p => p.ExamResults)
+    .HasForeignKey(d => d.ExamId)
+    .HasConstraintName("FK_ExamResults_Exams");
             entity.HasKey(e => e.ExamResultId).HasName("PK__ExamResu__3DBFDE2673C5DCBF");
 
             entity.Property(e => e.FinishedAt).HasColumnType("datetime");
@@ -235,6 +291,8 @@ public partial class VnufLearningContext : DbContext
         });
         OnModelCreatingPartial(modelBuilder);
     }
+    public virtual DbSet<Exam> Exams { get; set; }
 
+    public virtual DbSet<ExamQuestion> ExamQuestions { get; set; }
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }

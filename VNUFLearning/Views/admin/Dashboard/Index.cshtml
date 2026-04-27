@@ -2,194 +2,387 @@
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
     ViewData["Title"] = "Dashboard Admin";
 }
-<!-- Custom CSS cho Dashboard -->
+
 <style>
-    .stat-card {
-        border: none;
-        border-radius: 1rem;
-        transition: all 0.3s ease;
+    .admin-hero {
+        border-radius: 28px;
+        padding: 42px;
+        color: white;
+        background: linear-gradient(135deg,#046c3a 0%, #10b981 100%);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 12px 30px rgba(0,0,0,.08);
     }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 91, 51, 0.15) !important;
+        .admin-hero:before {
+            content: "";
+            position: absolute;
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            right: -60px;
+            bottom: -120px;
+            background: rgba(255,255,255,.08);
         }
 
-    .icon-circle {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
+        .admin-hero:after {
+            content: "";
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 24px;
+            right: 60px;
+            bottom: -20px;
+            background: rgba(255,255,255,.07);
+        }
+
+        .admin-hero h2 {
+            font-size: 46px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .admin-hero p {
+            font-size: 25px;
+            max-width: 900px;
+            margin: 0;
+            position: relative;
+            z-index: 2;
+            opacity: .95;
+        }
+
+    .dash-card {
+        border: 0;
+        border-radius: 28px;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(0,0,0,.06);
+        padding: 28px;
+        height: 100%;
+        transition: .25s;
+    }
+
+        .dash-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 35px rgba(0,0,0,.08);
+        }
+
+    .dash-label {
+        font-size: 15px;
+        font-weight: 700;
+        color: #94a3b8;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+    }
+
+    .dash-value {
+        font-size: 58px;
+        font-weight: 800;
+        line-height: 1;
+        color: #0f172a;
+        margin-bottom: 18px;
+    }
+
+    .dash-mini {
+        font-size: 18px;
+        color: #64748b;
+    }
+
+    .dash-icon {
+        width: 78px;
+        height: 78px;
+        border-radius: 22px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
+        font-size: 30px;
+    }
+
+    .soft-blue {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+
+    .soft-green {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    .soft-yellow {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .soft-red {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .panel-card {
+        border: 0;
+        border-radius: 28px;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(0,0,0,.06);
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .panel-head {
+        padding: 28px 32px;
+        border-bottom: 1px solid #edf2f7;
+        font-size: 30px;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .quick-btn {
+        display: block;
+        text-decoration: none;
+        padding: 18px 20px;
+        border-radius: 18px;
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 14px;
+        transition: .2s;
+    }
+
+        .quick-btn:hover {
+            transform: translateX(5px);
+        }
+
+    .btn-soft-green {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
+    .btn-soft-blue {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .btn-soft-yellow {
+        background: #fffbeb;
+        color: #d97706;
+    }
+
+    .btn-soft-red {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+    .activity-table th {
+        color: #64748b;
+        font-weight: 700;
+        font-size: 15px;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 18px;
+    }
+
+    .activity-table td {
+        padding: 20px 18px;
+        vertical-align: middle;
+        font-size: 16px;
+    }
+
+    .badge-soft {
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .bg-soft-green {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .bg-soft-blue {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .bg-soft-yellow {
+        background: #fef3c7;
+        color: #b45309;
     }
 </style>
 
-<div class="container-fluid">
+<div class="container-fluid py-3">
 
-    <!-- Lời chào -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="bg-white p-4 rounded-4 shadow-sm border-start border-5 border-success">
-                <h4 class="fw-bold text-dark mb-1">Chào mừng Quản trị viên trở lại! 👋</h4>
-                <p class="text-muted mb-0">Hôm nay hệ thống hoạt động ổn định. Dưới đây là tóm tắt tình hình dữ liệu.</p>
-            </div>
-        </div>
+    <!-- Banner -->
+    <div class="admin-hero mb-4">
+        <h2>Chào mừng Quản trị viên trở lại! 👋</h2>
+        <p>
+            Hệ thống hiện đang hoạt động ổn định.
+            Dưới đây là tóm tắt dữ liệu và các luồng nghiệp vụ mới nhất trong ngày hôm nay.
+        </p>
     </div>
 
-    <!-- 4 Thẻ Thống kê chính -->
-    <div class="row g-4 mb-5">
-        <!-- Thẻ 1: Tổng Sinh viên -->
-        <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card shadow-sm h-100 bg-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <p class="text-muted fw-bold mb-1">TỔNG SINH VIÊN</p>
-                            <h3 class="fw-bolder text-dark mb-0">1,245</h3>
-                        </div>
-                        <div class="icon-circle bg-primary bg-opacity-10 text-primary">
-                            <i class="fa fa-user-graduate"></i>
+    <!-- Stats -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-6 col-xl-3">
+            <div class="dash-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="dash-label">Tổng sinh viên</div>
+                        <div class="dash-value">@ViewBag.TotalStudents</div>
+                        <div class="dash-mini text-success fw-bold">
+                            <i class="fa fa-arrow-trend-up"></i>
+                            +@ViewBag.NewUsersThisWeek sinh viên mới
                         </div>
                     </div>
-                    <div class="mt-3 text-sm">
-                        <span class="text-success fw-bold"><i class="fa fa-arrow-up"></i> 12</span>
-                        <span class="text-muted"> sinh viên mới tuần này</span>
+                    <div class="dash-icon soft-blue">
+                        <i class="fa fa-user-graduate"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Thẻ 2: Ngân hàng câu hỏi -->
-        <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card shadow-sm h-100 bg-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <p class="text-muted fw-bold mb-1">CÂU HỎI TRONG KHO</p>
-                            <h3 class="fw-bolder text-dark mb-0">8,432</h3>
-                        </div>
-                        <div class="icon-circle bg-success bg-opacity-10 text-success">
-                            <i class="fa fa-database"></i>
+        <div class="col-md-6 col-xl-3">
+            <div class="dash-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="dash-label">Kho câu hỏi</div>
+                        <div class="dash-value">@ViewBag.TotalQuestions</div>
+                        <div class="dash-mini text-success fw-bold">
+                            <i class="fa fa-plus"></i>
+                            +@ViewBag.NewQuestionsThisWeek gần đây
                         </div>
                     </div>
-                    <div class="mt-3 text-sm">
-                        <span class="text-success fw-bold"><i class="fa fa-arrow-up"></i> 150</span>
-                        <span class="text-muted"> câu được thêm gần đây</span>
+                    <div class="dash-icon soft-green">
+                        <i class="fa fa-database"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Thẻ 3: Lượt làm bài thi -->
-        <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card shadow-sm h-100 bg-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <p class="text-muted fw-bold mb-1">LƯỢT LÀM BÀI</p>
-                            <h3 class="fw-bolder text-dark mb-0">5,021</h3>
-                        </div>
-                        <div class="icon-circle bg-warning bg-opacity-10 text-warning">
-                            <i class="fa fa-laptop-code"></i>
+        <div class="col-md-6 col-xl-3">
+            <div class="dash-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="dash-label">Tài liệu học tập</div>
+                        <div class="dash-value">@ViewBag.TotalDocuments</div>
+                        <div class="dash-mini text-success fw-bold">
+                            <i class="fa fa-upload"></i>
+                            +@ViewBag.NewDocumentsThisWeek tuần này
                         </div>
                     </div>
-                    <div class="mt-3 text-sm">
-                        <span class="text-warning fw-bold"><i class="fa fa-clock"></i> 45</span>
-                        <span class="text-muted"> bài thi đang diễn ra</span>
+                    <div class="dash-icon soft-yellow">
+                        <i class="fa fa-folder-open"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Thẻ 4: AI Status -->
-        <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card shadow-sm h-100 bg-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <p class="text-muted fw-bold mb-1">TRẠNG THÁI AI GEMINI</p>
-                            <h3 class="fw-bolder text-dark mb-0">Online</h3>
-                        </div>
-                        <div class="icon-circle bg-info bg-opacity-10 text-info">
-                            <i class="fa fa-robot"></i>
+        <div class="col-md-6 col-xl-3">
+            <div class="dash-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="dash-label">Tài khoản bị khóa</div>
+                        <div class="dash-value text-danger">@ViewBag.LockedUsers</div>
+                        <div class="dash-mini text-muted fw-bold">
+                            Tổng tài khoản: @ViewBag.TotalUsers
                         </div>
                     </div>
-                    <div class="mt-3 text-sm">
-                        <span class="text-success fw-bold"><i class="fa fa-check-circle"></i> Đã kết nối</span>
-                        <span class="text-muted"> API hoạt động tốt</span>
+                    <div class="dash-icon soft-red">
+                        <i class="fa fa-user-lock"></i>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 
-    <!-- Phân vùng Hoạt động và Cảnh báo -->
+    <!-- Panels -->
     <div class="row g-4">
-        <!-- Nhật ký hoạt động gần đây -->
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
-                    <h5 class="fw-bold text-dark"><i class="fa fa-list-ul text-success me-2"></i>Hoạt động gần đây</h5>
+
+        <!-- Activity -->
+        <div class="col-xl-8">
+            <div class="panel-card">
+                <div class="panel-head">
+                    <i class="fa fa-list-check text-success me-2"></i>
+                    Hoạt động gần đây
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light text-muted">
-                                <tr>
-                                    <th>Thời gian</th>
-                                    <th>Người dùng</th>
-                                    <th>Hành động</th>
-                                    <th>Chi tiết</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="text-muted small">10 phút trước</td>
-                                    <td class="fw-bold">Giảng viên A</td>
-                                    <td><span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Thêm mới</span></td>
-                                    <td>Import 50 câu hỏi môn CSDL</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted small">35 phút trước</td>
-                                    <td class="fw-bold">Sinh viên K67</td>
-                                    <td><span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">Làm bài</span></td>
-                                    <td>Nộp bài thi Lập trình mạng (9.5đ)</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted small">2 giờ trước</td>
-                                    <td class="fw-bold">Hệ thống AI</td>
-                                    <td><span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3">Chấm tự luận</span></td>
-                                    <td>Hoàn thành chấm 12 bài thi ảnh chụp</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0 activity-table">
+                        <thead>
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Người dùng</th>
+                                <th>Hành động</th>
+                                <th>Chi tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>10 phút trước</td>
+                                <td class="fw-bold">Giảng viên</td>
+                                <td>
+                                    <span class="badge-soft bg-soft-green">Thêm mới</span>
+                                </td>
+                                <td>Upload tài liệu môn học</td>
+                            </tr>
+
+                            <tr>
+                                <td>35 phút trước</td>
+                                <td class="fw-bold">Sinh viên</td>
+                                <td>
+                                    <span class="badge-soft bg-soft-blue">Làm bài</span>
+                                </td>
+                                <td>Nộp bài thi trực tuyến</td>
+                            </tr>
+
+                            <tr>
+                                <td>2 giờ trước</td>
+                                <td class="fw-bold">Admin</td>
+                                <td>
+                                    <span class="badge-soft bg-soft-yellow">Import</span>
+                                </td>
+                                <td>Import ngân hàng câu hỏi</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- System Logs / Lối tắt -->
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
-                    <h5 class="fw-bold text-dark"><i class="fa fa-bolt text-warning me-2"></i>Thao tác nhanh</h5>
+        <!-- Quick actions -->
+        <div class="col-xl-4">
+            <div class="panel-card">
+                <div class="panel-head">
+                    <i class="fa fa-bolt text-warning me-2"></i>
+                    Thao tác nhanh
                 </div>
-                <div class="card-body">
-                    <div class="d-grid gap-3">
-                        <a href="/Admin/Users/Create" class="btn btn-outline-success text-start p-3 fw-bold rounded-3">
-                            <i class="fa fa-user-plus fs-5 me-2 w-20px"></i> Cấp tài khoản mới
-                        </a>
-                        <a href="/Admin/Subjects" class="btn btn-outline-primary text-start p-3 fw-bold rounded-3">
-                            <i class="fa fa-book fs-5 me-2 w-20px"></i> Quản lý Môn học
-                        </a>
-                        <a href="/Admin/Questions" class="btn btn-outline-warning text-start p-3 fw-bold rounded-3 text-dark">
-                            <i class="fa fa-database fs-5 me-2 w-20px"></i> Kiểm tra Kho câu hỏi
-                        </a>
-                    </div>
+
+                <div class="p-4">
+
+                    <a href="/Admin/Users/Create" class="quick-btn btn-soft-green">
+                        <i class="fa fa-user-plus me-2"></i>
+                        Cấp tài khoản mới
+                    </a>
+
+                    <a href="/Admin/Subjects" class="quick-btn btn-soft-blue">
+                        <i class="fa fa-book me-2"></i>
+                        Quản lý môn học
+                    </a>
+
+                    <a href="/Admin/Questions" class="quick-btn btn-soft-yellow">
+                        <i class="fa fa-circle-question me-2"></i>
+                        Ngân hàng câu hỏi
+                    </a>
+
+                    <a href="/Admin/Documents" class="quick-btn btn-soft-red">
+                        <i class="fa fa-folder me-2"></i>
+                        Quản lý học liệu
+                    </a>
+
                 </div>
             </div>
         </div>
+
     </div>
+
 </div>

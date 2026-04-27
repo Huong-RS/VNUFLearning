@@ -1,0 +1,248 @@
+﻿@model IEnumerable<VNUFLearning.Models.Question>
+
+@{
+    Layout = "~/Views/Shared/_LayoutTeacher.cshtml";
+    ViewData["Title"] = "Ngân hàng câu hỏi";
+
+    int questionType = ViewBag.QuestionType ?? 0;
+    int level = ViewBag.Level ?? 0;
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="fa fa-database text-success me-2"></i> Ngân hàng câu hỏi
+            </h2>
+            <p class="text-muted mb-0">Quản lý câu hỏi thuộc các môn học bạn được phân công.</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary fw-bold px-4"
+                    data-bs-toggle="modal"
+                    data-bs-target="#importModal">
+                <i class="fa fa-file-excel me-1"></i> Import Excel
+            </button>
+
+            <a href="/Teacher/Questions/Create" class="btn btn-success fw-bold px-4">
+                <i class="fa fa-plus me-1"></i> Thêm câu hỏi
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success rounded-4 fw-bold">
+            <i class="fa fa-check-circle me-2"></i>@TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger rounded-4 fw-bold">
+            <i class="fa fa-triangle-exclamation me-2"></i>@TempData["Error"]
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body">
+            <form method="get" action="/Teacher/Questions">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted fw-bold">Môn học</label>
+                        <select name="subjectId" asp-items="ViewBag.SubjectList" class="form-select">
+                            <option value="">Tất cả môn phụ trách</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted fw-bold">Loại câu hỏi</label>
+                        <select name="questionType" class="form-select">
+                            <option value="">Tất cả loại</option>
+                            <option value="1" selected="@(questionType == 1)">Trắc nghiệm</option>
+                            <option value="2" selected="@(questionType == 2)">Tự luận</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted fw-bold">Mức độ</label>
+                        <select name="level" class="form-select">
+                            <option value="">Tất cả</option>
+                            <option value="1" selected="@(level == 1)">Dễ</option>
+                            <option value="2" selected="@(level == 2)">Trung bình</option>
+                            <option value="3" selected="@(level == 3)">Khó</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted fw-bold">Tìm kiếm</label>
+                        <input name="keyword"
+                               value="@ViewBag.Keyword"
+                               class="form-control"
+                               placeholder="Nhập nội dung câu hỏi..." />
+                    </div>
+
+                    <div class="col-12 d-flex gap-2">
+                        <button class="btn btn-success px-4 fw-bold">
+                            <i class="fa fa-filter me-1"></i> Lọc
+                        </button>
+
+                        <a href="/Teacher/Questions" class="btn btn-outline-secondary px-4 fw-bold">
+                            <i class="fa fa-rotate-right me-1"></i> Làm mới
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-muted">
+                    <tr>
+                        <th class="ps-4">ID</th>
+                        <th>Môn học</th>
+                        <th>Nội dung câu hỏi</th>
+                        <th>Loại</th>
+                        <th>Mức độ</th>
+                        <th>Đáp án</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                Chưa có câu hỏi nào.
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4 fw-bold">#@item.QuestionId</td>
+
+                            <td>
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill px-3 py-2">
+                                    @item.Subject.SubjectName
+                                </span>
+                            </td>
+
+                            <td style="max-width:420px;">
+                                <div class="fw-bold text-truncate" title="@item.Content">
+                                    @item.Content
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(item.Chapter))
+                                {
+                                    <div class="small text-muted">@item.Chapter</div>
+                                }
+                            </td>
+
+                            <td>
+                                @if (item.QuestionType == 1)
+                                {
+                                    <span class="badge bg-light text-dark border rounded-pill px-3 py-2">
+                                        <i class="fa fa-circle-check me-1"></i> Trắc nghiệm
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning rounded-pill px-3 py-2">
+                                        <i class="fa fa-pen me-1"></i> Tự luận
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                @{
+                                    var lvText = item.Level == 1 ? "Dễ" : item.Level == 2 ? "Trung bình" : item.Level == 3 ? "Khó" : "Chưa đặt";
+                                    var lvClass = item.Level == 1 ? "success" : item.Level == 2 ? "warning" : item.Level == 3 ? "danger" : "secondary";
+                                }
+
+                                <span class="badge bg-@lvClass bg-opacity-10 text-@lvClass border border-@lvClass rounded-pill px-3 py-2">
+                                    @lvText
+                                </span>
+                            </td>
+
+                            <td class="fw-bold text-success">
+                                @item.CorrectAnswer
+                            </td>
+
+                            <td class="text-end pe-4">
+                                <a href="/Teacher/Questions/Edit/@item.QuestionId"
+                                   class="btn btn-sm btn-outline-primary"
+                                   title="Sửa">
+                                    <i class="fa fa-pen"></i>
+                                </a>
+
+                                <form action="/Teacher/Questions/Delete/@item.QuestionId"
+                                      method="post"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa câu hỏi này?');">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-danger" title="Xóa">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">
+                    <i class="fa fa-file-excel text-success me-2"></i> Import câu hỏi từ Excel
+                </h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form action="/Teacher/Questions/ImportExcel" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Môn học</label>
+                        <select name="subjectId" asp-items="ViewBag.SubjectList" class="form-select" required>
+                            <option value="">-- Chọn môn học --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">File Excel (.xlsx)</label>
+                        <input type="file" name="excelFile" class="form-control" accept=".xlsx" required />
+                    </div>
+
+                    <div class="alert alert-light border small mb-0">
+                        <strong>Cấu trúc cột:</strong><br />
+                        Content | QuestionType | OptionA | OptionB | OptionC | OptionD | CorrectAnswer | Level | Chapter | Explaination
+                        <br />
+                        QuestionType: 1 = Trắc nghiệm, 2 = Tự luận.
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <a href="/Teacher/Questions/DownloadTemplate" class="btn btn-outline-success me-auto">
+                        <i class="fa fa-download me-1"></i> Tải mẫu
+                    </a>
+
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+
+                    <button type="submit" class="btn btn-success">
+                        <i class="fa fa-upload me-1"></i> Import
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

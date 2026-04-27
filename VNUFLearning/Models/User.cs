@@ -24,6 +24,7 @@ public partial class User
     public DateTime? CreatedAt { get; set; }
 
     public bool IsActive { get; set; }
+    public virtual ICollection<Exam> Exams { get; set; } = new List<Exam>();
 
     public virtual ICollection<BlogPost> BlogPosts { get; set; } = new List<BlogPost>();
 

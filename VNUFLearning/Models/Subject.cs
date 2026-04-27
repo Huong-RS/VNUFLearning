@@ -19,8 +19,9 @@ public partial class Subject
 
     public string? CoverImageUrl { get; set; }
 
-    public bool IsActive { get; set; }
 
+    public bool IsActive { get; set; }
+    public virtual ICollection<Exam> Exams { get; set; } = new List<Exam>();
     public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
 
     public virtual ICollection<ExamResult> ExamResults { get; set; } = new List<ExamResult>();

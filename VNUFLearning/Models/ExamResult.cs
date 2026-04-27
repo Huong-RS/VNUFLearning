@@ -18,7 +18,9 @@ public partial class ExamResult
     public DateTime? FinishedAt { get; set; }
 
     public string? Status { get; set; }
+    public int? ExamId { get; set; }
 
+    public virtual Exam? Exam { get; set; }
     public string? AiFeedback { get; set; }
 
     public virtual ICollection<ExamDetail> ExamDetails { get; set; } = new List<ExamDetail>();

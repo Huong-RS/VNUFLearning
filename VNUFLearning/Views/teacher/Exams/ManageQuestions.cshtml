@@ -1,0 +1,316 @@
+﻿@model VNUFLearning.Models.Exam
+
+@{
+    Layout = "~/Views/Shared/_LayoutTeacher.cshtml";
+    ViewData["Title"] = "Chỉnh sửa nội dung đề";
+
+    var questionCount = Model.ExamQuestions?.Count ?? 0;
+
+    string examTypeText = Model.ExamType == 1
+        ? "Chỉ Trắc nghiệm"
+        : Model.ExamType == 2
+            ? "Chỉ Tự luận"
+            : "Trắc nghiệm + Tự luận AI";
+}
+
+<div class="container-fluid">
+
+    <div class="mb-4">
+        <a href="/Teacher/Exams" class="btn btn-light border rounded-pill fw-bold">
+            <i class="fa fa-arrow-left me-1"></i> Quay lại
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success rounded-4 fw-bold">
+            <i class="fa fa-check-circle me-2"></i>@TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger rounded-4 fw-bold">
+            <i class="fa fa-triangle-exclamation me-2"></i>@TempData["Error"]
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <span class="badge bg-light text-dark border rounded-pill px-3 py-2 me-2">
+                            @Model.Subject.SubjectName
+                        </span>
+
+                        @if (Model.IsPublished)
+                        {
+                            <span class="badge bg-success rounded-pill px-3 py-2">
+                                <i class="fa fa-globe me-1"></i> Công khai
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary rounded-pill px-3 py-2">
+                                <i class="fa fa-file-pen me-1"></i> Bản nháp
+                            </span>
+                        }
+                    </div>
+
+                    <h1 class="fw-bold mb-3">@Model.Title</h1>
+
+                    <div class="d-flex flex-wrap gap-4 text-muted fw-bold">
+                        <div>
+                            <i class="fa fa-layer-group me-1"></i> @examTypeText
+                        </div>
+                        <div>
+                            <i class="fa fa-list-ol me-1"></i> @questionCount câu hỏi
+                        </div>
+                        <div>
+                            <i class="fa fa-clock me-1"></i> @Model.DurationMinutes phút
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    @if (!Model.IsPublished)
+                    {
+                        if (questionCount > 0)
+                        {
+                            <form method="post" action="/Teacher/Exams/Publish/@Model.ExamId">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-success btn-lg rounded-4 fw-bold px-4">
+                                    <i class="fa fa-globe me-1"></i> Công khai đề
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <button class="btn btn-secondary btn-lg rounded-4 fw-bold px-4" disabled>
+                                <i class="fa fa-ban me-1"></i> Chưa thể công khai
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <form method="post" action="/Teacher/Exams/Unpublish/@Model.ExamId">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-outline-secondary btn-lg rounded-4 fw-bold px-4">
+                                <i class="fa fa-lock me-1"></i> Đóng đề thi
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (questionCount == 0)
+    {
+        <div class="alert alert-danger rounded-4 fw-bold">
+            <i class="fa fa-triangle-exclamation me-2"></i>
+            Đề thi đang trống. Vui lòng thêm câu hỏi trước khi công khai.
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="fw-bold mb-0">
+            <i class="fa fa-list-check text-success me-2"></i> Danh sách câu hỏi trong đề
+        </h3>
+
+        @if (!Model.IsPublished)
+        {
+            <form method="post" action="/Teacher/Exams/AddRandomQuestions" class="d-flex gap-2">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="examId" value="@Model.ExamId" />
+
+                <input type="number"
+                       name="quantity"
+                       value="5"
+                       min="1"
+                       class="form-control"
+                       style="width:110px;" />
+
+                <button class="btn btn-outline-primary fw-bold rounded-4">
+                    <i class="fa fa-wand-magic-sparkles me-1"></i> Random thêm câu
+                </button>
+            </form>
+        }
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        @if (!Model.ExamQuestions.Any())
+        {
+            <div class="p-5 text-center text-muted">
+                <i class="fa fa-circle-plus mb-3" style="font-size:46px;"></i>
+                <h4 class="fw-bold">Chưa có câu hỏi trong đề</h4>
+                <p>Dùng nút “Random thêm câu” để bổ sung nội dung.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var item in Model.ExamQuestions.OrderBy(x => x.QuestionOrder))
+            {
+                var q = item.Question;
+
+                <div class="question-item p-4 border-bottom">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div class="d-flex gap-3">
+                            <div class="question-order">
+                                @(item.QuestionOrder ?? 0)
+                            </div>
+
+                            <div>
+                                <div class="mb-2">
+                                    @if (q.QuestionType == 1)
+                                    {
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 rounded-pill">
+                                            TRẮC NGHIỆM
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-purple-soft px-3 py-2 rounded-pill">
+                                            TỰ LUẬN
+                                        </span>
+                                    }
+
+                                    @if (!string.IsNullOrWhiteSpace(q.Chapter))
+                                    {
+                                        <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">
+                                            @q.Chapter
+                                        </span>
+                                    }
+                                </div>
+
+                                <h5 class="fw-bold mb-3">@q.Content</h5>
+
+                                @if (q.QuestionType == 1)
+                                {
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <div class="option-box @(q.CorrectAnswer == "A" ? "correct" : "")">
+                                                A. @q.OptionA
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="option-box @(q.CorrectAnswer == "B" ? "correct" : "")">
+                                                B. @q.OptionB
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="option-box @(q.CorrectAnswer == "C" ? "correct" : "")">
+                                                C. @q.OptionC
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="option-box @(q.CorrectAnswer == "D" ? "correct" : "")">
+                                                D. @q.OptionD
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-warning rounded-4 mb-0">
+                                        <strong>
+                                            <i class="fa fa-robot me-1"></i> Đáp án mẫu & Rubric chấm điểm cho Gemini:
+                                        </strong>
+
+                                        <div class="mt-3">
+                                            <div class="fw-bold text-dark mb-1">
+                                                <i class="fa fa-check-circle text-success me-1"></i> Đáp án mẫu:
+                                            </div>
+
+                                            @if (!string.IsNullOrWhiteSpace(q.CorrectAnswer))
+                                            {
+                                                <div class="mb-3">@q.CorrectAnswer</div>
+                                            }
+                                            else
+                                            {
+                                                <div class="text-danger fw-bold mb-3">
+                                                    Chưa có đáp án mẫu.
+                                                </div>
+                                            }
+
+                                            <div class="fw-bold text-dark mb-1">
+                                                <i class="fa fa-list-check text-primary me-1"></i> Rubric / ý chấm điểm:
+                                            </div>
+
+                                            @if (!string.IsNullOrWhiteSpace(q.Explaination))
+                                            {
+                                                <div>@q.Explaination</div>
+                                            }
+                                            else
+                                            {
+                                                <div class="text-danger fw-bold">
+                                                    Chưa có rubric. Gemini sẽ không đủ căn cứ để quy đổi điểm theo phần trăm ý đúng.
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        @if (!Model.IsPublished)
+                        {
+                            <form method="post"
+                                  action="/Teacher/Exams/RemoveQuestion"
+                                  onsubmit="return confirm('Loại câu hỏi này khỏi đề?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="examQuestionId" value="@item.ExamQuestionId" />
+
+                                <button class="btn btn-outline-danger rounded-pill fw-bold">
+                                    <i class="fa fa-trash me-1"></i> Loại bỏ
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<style>
+    .question-order {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 18px;
+        color: #334155;
+        flex-shrink: 0;
+    }
+
+    .option-box {
+        border: 1px solid #dbe3ef;
+        border-radius: 14px;
+        padding: 14px 16px;
+        font-weight: 600;
+        background: white;
+    }
+
+        .option-box.correct {
+            border-color: #10b981;
+            background: #ecfdf5;
+            color: #047857;
+            font-weight: 800;
+        }
+
+    .bg-purple-soft {
+        background: #f3e8ff;
+        color: #7e22ce;
+        border: 1px solid #d8b4fe;
+    }
+</style>

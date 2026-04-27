@@ -40,6 +40,7 @@ namespace VNUFLearning.Models
         public bool IsActive { get; set; }
 
         public virtual ICollection<ExamDetail> ExamDetails { get; set; } = new List<ExamDetail>();
+        public virtual ICollection<ExamQuestion> ExamQuestions { get; set; } = new List<ExamQuestion>();
 
         public virtual Subject Subject { get; set; } = null!;
 

@@ -1,0 +1,350 @@
+﻿@model IEnumerable<VNUFLearning.Models.ExamResult>
+
+@{
+    Layout = "~/Views/Shared/_LayoutTeacher.cshtml";
+    ViewData["Title"] = "Bảng điểm lớp học";
+
+    var exam = ViewBag.Exam as VNUFLearning.Models.Exam;
+    double avgScore = ViewBag.AverageScore ?? 0;
+    double passRate = ViewBag.PassRate ?? 0;
+    int totalSubmitted = ViewBag.TotalSubmitted ?? 0;
+    int aiPending = ViewBag.AiPending ?? 0;
+    string keyword = ViewBag.Keyword ?? "";
+}
+
+<div class="container-fluid">
+
+    <div class="mb-4">
+        <a href="/Teacher/Exams" class="btn btn-light border rounded-circle me-2">
+            <i class="fa fa-arrow-left"></i>
+        </a>
+        <span class="text-muted fw-bold fs-5">Quản lý Đề thi</span>
+        <i class="fa fa-chevron-right text-muted mx-2"></i>
+        <span class="fw-bold fs-5">Bảng điểm lớp học</span>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <div class="mb-2">
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill px-3 py-2">
+                    @exam?.Subject.SubjectName
+                </span>
+
+                @if (exam?.IsPublished == true)
+                {
+                    <span class="text-success fw-bold ms-2">
+                        <i class="fa fa-globe me-1"></i> Đang Công khai
+                    </span>
+                }
+                else
+                {
+                    <span class="text-secondary fw-bold ms-2">
+                        <i class="fa fa-lock me-1"></i> Bản nháp
+                    </span>
+                }
+            </div>
+
+            <h1 class="fw-bold display-5 mb-0">@exam?.Title</h1>
+        </div>
+
+        <a href="/Teacher/Results/Export?examId=@exam?.ExamId"
+           class="btn btn-light border shadow-sm rounded-4 fw-bold px-5 py-4">
+            <i class="fa fa-file-excel text-success me-2"></i>
+            Xuất Bảng Điểm
+        </a>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="result-stat-card">
+                <div>
+                    <div class="stat-title">Tổng lượt nộp bài</div>
+                    <div class="stat-number">@totalSubmitted <span>lượt</span></div>
+                </div>
+                <div class="stat-icon bg-blue-soft">
+                    <i class="fa fa-users"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="result-stat-card">
+                <div>
+                    <div class="stat-title">Điểm trung bình</div>
+                    <div class="stat-number">@avgScore.ToString("0.0")</div>
+                </div>
+                <div class="stat-icon bg-yellow-soft">
+                    <i class="fa fa-star"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="result-stat-card border-purple">
+                <div>
+                    <div class="stat-title text-purple">AI đang chấm</div>
+                    <div class="stat-number">@aiPending <span>bài thi</span></div>
+                </div>
+                <div class="stat-icon bg-purple-soft">
+                    <i class="fa fa-robot"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="result-stat-card">
+                <div>
+                    <div class="stat-title">Tỷ lệ đạt (&gt;=5đ)</div>
+                    <div class="stat-number text-success">@passRate.ToString("0")%</div>
+                </div>
+                <div class="stat-icon bg-green-soft">
+                    <i class="fa fa-chart-pie"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-body p-4 border-bottom">
+            <form method="get" action="/Teacher/Results" class="row g-3">
+                <input type="hidden" name="examId" value="@exam?.ExamId" />
+
+                <div class="col-md-6">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white">
+                            <i class="fa fa-search text-muted"></i>
+                        </span>
+                        <input name="keyword"
+                               value="@keyword"
+                               class="form-control"
+                               placeholder="Tìm theo MSV, Họ tên..." />
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <button class="btn btn-success btn-lg fw-bold w-100">
+                        Tìm kiếm
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 result-table">
+                <thead>
+                    <tr>
+                        <th>Họ và tên</th>
+                        <th>MSV</th>
+                        <th>Thời gian nộp</th>
+                        <th>Trắc nghiệm</th>
+                        <th>Tự luận (AI)</th>
+                        <th>Tổng điểm</th>
+                        <th>Trạng thái</th>
+                        <th>Chi tiết</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                Chưa có sinh viên nộp bài.
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var item in Model)
+                    {
+                        var mcqDetails = item.ExamDetails
+                        .Where(d => d.Question.QuestionType == 1)
+                        .ToList();
+
+                        var essayDetails = item.ExamDetails
+                        .Where(d => d.Question.QuestionType == 2)
+                        .ToList();
+
+                        var mcqCorrect = mcqDetails.Count(d => d.IsCorrect == true);
+                        var mcqTotal = mcqDetails.Count;
+
+                        var essayTotal = essayDetails.Count;
+
+                        var isAiPending = item.Status == "AI_DANG_CHAM";
+                        var passed = item.Score >= 5;
+
+                        <tr class="@(isAiPending ? "row-pending" : "")">
+                            <td class="fw-bold">
+                                <div>@item.User.FullName</div>
+                                <div class="small text-muted">@item.User.Email</div>
+                            </td>
+
+                            <td class="text-muted fw-bold">@item.User.StudentCode</td>
+
+                            <td>
+                                @(item.FinishedAt?.ToString("hh:mm tt, dd/MM") ?? "--")
+                            </td>
+
+                            <td class="fw-bold">
+                                @if (mcqTotal > 0)
+                                {
+                                    <span>@mcqCorrect / @mcqTotal</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">--</span>
+                                }
+                            </td>
+
+                            <td class="fw-bold text-purple">
+                                @if (isAiPending)
+                                {
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                }
+                                else if (essayTotal > 0)
+                                {
+                                    <span>Đã chấm</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">--</span>
+                                }
+                            </td>
+
+                            <td class="fw-bold fs-4 @(passed ? "text-success" : "text-danger")">
+                                @(item.Score?.ToString("0.0") ?? "--")
+                            </td>
+
+                            <td>
+                                @if (isAiPending)
+                                {
+                                    <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                        AI đang chấm
+                                    </span>
+                                }
+                                else if (passed)
+                                {
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-2">
+                                        Hoàn tất
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill px-3 py-2">
+                                        Không đạt
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                <a href="/Teacher/Results/Detail/@item.ExamResultId"
+                                   class="btn btn-link fw-bold">
+                                    <i class="fa fa-eye me-1"></i> Xem bài
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card-footer bg-white p-4 d-flex justify-content-between">
+            <span class="text-muted">
+                Hiển thị @Model.Count() kết quả
+            </span>
+
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary disabled">Trước</button>
+                <button class="btn btn-success">1</button>
+                <button class="btn btn-outline-secondary disabled">Sau</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .result-stat-card {
+        background: white;
+        border-radius: 24px;
+        padding: 28px;
+        min-height: 145px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .06);
+        border: 1px solid #e5edf7;
+    }
+
+    .stat-title {
+        color: #64748b;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: 12px;
+    }
+
+    .stat-number {
+        font-size: 38px;
+        font-weight: 900;
+        color: #0f172a;
+    }
+
+        .stat-number span {
+            font-size: 18px;
+            color: #94a3b8;
+        }
+
+    .stat-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+    }
+
+    .bg-blue-soft {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .bg-yellow-soft {
+        background: #fffbeb;
+        color: #f59e0b;
+    }
+
+    .bg-purple-soft {
+        background: #faf5ff;
+        color: #9333ea;
+    }
+
+    .bg-green-soft {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
+    .border-purple {
+        border-left: 6px solid #a855f7;
+    }
+
+    .text-purple {
+        color: #9333ea !important;
+    }
+
+    .result-table th {
+        background: #f8fafc;
+        color: #64748b;
+        text-transform: uppercase;
+        font-weight: 800;
+        padding: 20px;
+    }
+
+    .result-table td {
+        padding: 22px 20px;
+        border-bottom: 1px solid #eef2f7;
+    }
+
+    .row-pending {
+        background: #fffdf5;
+    }
+</style>

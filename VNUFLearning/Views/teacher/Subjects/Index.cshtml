@@ -1,0 +1,91 @@
+﻿@model IEnumerable<VNUFLearning.Models.Subject>
+
+@{
+    Layout = "~/Views/Shared/_LayoutTeacher.cshtml";
+    ViewData["Title"] = "Môn học phụ trách";
+}
+
+<div class="container-fluid">
+    <div class="mb-4">
+        <h2 class="fw-bold">
+            <i class="fa fa-book-open text-success me-2"></i> Môn học phụ trách
+        </h2>
+        <p class="text-muted">Danh sách các môn học bạn được Admin phân công giảng dạy.</p>
+    </div>
+
+    @if (!Model.Any())
+    {
+            <div class="alert alert-warning rounded-4 fw-bold">
+                Bạn chưa được phân công môn học nào.
+            </div>
+    }
+    else
+    {
+            <div class="row g-4">
+            @foreach (var item in Model)
+            {
+                var cover = string.IsNullOrWhiteSpace(item.CoverImageUrl)
+                    ? "/images/default-subject.jpg"
+                    : item.CoverImageUrl;
+
+                        <div class="col-md-6 col-xl-4">
+                            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+                        <div class="subject-cover">
+                            <i class="fa fa-book-open"></i>
+                        </div>
+
+                                <div class="card-body p-4">
+                                    <div class="mb-2">
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2">
+                                    @(string.IsNullOrWhiteSpace(item.SubjectCode) ? $"MH{item.SubjectId}" : item.SubjectCode)
+                                        </span>
+
+                                        <span class="badge bg-light text-dark border rounded-pill px-3 py-2">
+                                    @(item.Credits.HasValue ? $"{item.Credits} tín chỉ" : "Chưa nhập tín chỉ")
+                                        </span>
+                                    </div>
+
+                                    <h4 class="fw-bold">@item.SubjectName</h4>
+
+                                    <p class="text-muted small">
+                                @(string.IsNullOrWhiteSpace(item.Description) ? "Chưa có mô tả." : item.Description)
+                                    </p>
+
+                                    <div class="text-muted small mb-3">
+                                        <i class="fa fa-building me-1"></i>
+                                @(string.IsNullOrWhiteSpace(item.DepartmentName) ? "Chưa cập nhật khoa/viện" : item.DepartmentName)
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        <a href="/Teacher/Questions?subjectId=@item.SubjectId"
+                                           class="btn btn-success rounded-pill px-3">
+                                            <i class="fa fa-database me-1"></i> Câu hỏi
+                                        </a>
+
+                                        <a href="/Teacher/Documents?subjectId=@item.SubjectId"
+                                           class="btn btn-outline-primary rounded-pill px-3">
+                                            <i class="fa fa-folder-open me-1"></i> Tài liệu
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+            }
+            </div>
+    }
+</div>
+<style>
+    .subject-cover {
+        height: 180px;
+        background: linear-gradient(135deg, #006b3c, #10b981);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .subject-cover i {
+            font-size: 56px;
+            opacity: .95;
+        }
+</style>
