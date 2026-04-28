@@ -1,0 +1,598 @@
+﻿@model VNUFLearning.Controllers.Student.DoPracticeViewModel
+
+@{
+    ViewData["Title"] = "Làm bài";
+    bool isMock = Model.Mode == "mock";
+}
+
+<div class="do-page">
+    <header class="do-header">
+        <div>
+            <span class="mode-badge @(isMock ? "mock" : "practice")">
+                @(isMock ? "THI THỬ" : "LUYỆN TẬP")
+            </span>
+            <h2>@Model.SubjectName</h2>
+        </div>
+
+        <div class="timer-box">
+            <small>@(isMock ? "THỜI GIAN CÒN LẠI" : "THỜI GIAN HỌC")</small>
+            <b id="timer">00:00</b>
+        </div>
+
+        <button form="examForm" type="submit" class="submit-btn">Nộp bài</button>
+    </header>
+
+    <form id="examForm" asp-controller="Practice" asp-action="Submit" method="post">
+        <input type="hidden" name="Mode" value="@Model.Mode" />
+        <input type="hidden" name="ExamId" value="@Model.ExamId" />
+        <input type="hidden" name="SubjectId" value="@Model.SubjectId" />
+        <input type="hidden" name="StartedAt" value="@Model.StartedAt.ToString("yyyy-MM-ddTHH:mm:ss")" />
+
+        <main class="question-wrapper">
+            @for (int i = 0; i < Model.Questions.Count; i++)
+            {
+                var q = Model.Questions[i];
+
+                <section class="question-card"
+                         data-type="@q.QuestionType"
+                         data-correct="@q.CorrectAnswer"
+                         data-mode="@Model.Mode">
+
+                    <input type="hidden" name="Answers[@i].QuestionId" value="@q.QuestionId" />
+
+                    <div class="question-no">@(i + 1)</div>
+
+                    <div class="question-content">
+                        <h3>@q.Content</h3>
+
+                        @if (!string.IsNullOrEmpty(q.ImageUrl))
+                        {
+                            <img src="@q.ImageUrl" class="q-img" />
+                        }
+
+                        @if (q.QuestionType == 1)
+                        {
+                            var options = new List<(string Key, string? Text)>
+                    {
+                    ("A", q.OptionA),
+                    ("B", q.OptionB),
+                    ("C", q.OptionC),
+                    ("D", q.OptionD)
+                    };
+
+                            if (isMock)
+                            {
+                                options = options.OrderBy(x => Guid.NewGuid()).ToList();
+                            }
+
+                            <div class="option-list">
+                                @{
+                                    var displayLabels = new[] { "A", "B", "C", "D" };
+                                }
+
+                                @for (int j = 0; j < options.Count; j++)
+                                {
+                                    var op = options[j];
+                                    var displayLabel = displayLabels[j];
+
+                                    <label class="option-item">
+                                        <!-- value giữ đáp án gốc để chấm đúng -->
+                                        <input type="radio"
+                                               name="Answers[@i].UserAnswer"
+                                               value="@op.Key"
+                                               data-display="@displayLabel"
+                                               hidden />
+
+                                        <!-- chữ A/B/C/D hiển thị được đánh lại theo vị trí mới -->
+                                        <b>@displayLabel.</b>
+                                        <span>@op.Text</span>
+                                    </label>
+                                }
+                            </div>
+
+                            <div class="feedback"></div>
+                            @if (!isMock)
+                            {
+                                <div class="explain-after-answer">
+                                    <b>Giải thích:</b>
+                                    <p>
+                                        @(string.IsNullOrWhiteSpace(q.Explaination)
+                                            ? "Chưa có giải thích cho câu hỏi này."
+                                            : q.Explaination)
+                                    </p>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <textarea name="Answers[@i].UserAnswer"
+                                      rows="6"
+                                      class="essay-box"
+                                      placeholder="Nhập câu trả lời tự luận của bạn..."></textarea>
+
+                            <div class="essay-upload">
+                                <label>
+                                    📷 Ảnh bài làm
+                                    <input type="file" accept="image/*" hidden />
+                                </label>
+
+                                <label>
+                                    📄 File bài làm
+                                    <input type="file" accept=".doc,.docx,.pdf" hidden />
+                                </label>
+                            </div>
+
+                            @if (!isMock)
+                            {
+                                <button type="button" class="hint-btn" onclick="toggleHint(@i)">
+                                    Xem gợi ý / đáp án mẫu
+                                </button>
+
+                                <div id="hint-@i" class="hint-box">
+                                    <b>Đáp án mẫu:</b>
+                                    <p>@q.CorrectAnswer</p>
+                                </div>
+                            }
+                        }
+                    </div>
+                </section>
+            }
+        </main>
+    </form>
+</div>
+
+<div id="processing" class="processing">
+    <div class="processing-card">
+        <h2>Hệ thống đang xử lý...</h2>
+        <p>Gemini AI đang phân tích dữ liệu tự luận (OCR & NLP), vui lòng không đóng trang.</p>
+    </div>
+</div>
+<style>
+    body {
+        background:
+            radial-gradient(circle at 18% 18%, rgba(38,213,169,.28), transparent 24%),
+            radial-gradient(circle at 85% 12%, rgba(0,107,63,.18), transparent 25%),
+            linear-gradient(135deg, #eafaf2 0%, #f7fff9 48%, #edf8f1 100%) !important;
+        color: #102033;
+    }
+
+    body::before,
+    body::after {
+        content: "";
+        position: fixed;
+        width: 250px;
+        height: 520px;
+        border-radius: 48px;
+        background: linear-gradient(180deg, rgba(0,168,107,.22), rgba(185,255,238,.12));
+        z-index: -1;
+    }
+
+    body::before {
+        left: -110px;
+        top: 160px;
+        transform: rotate(-35deg);
+    }
+
+    body::after {
+        right: -95px;
+        top: 70px;
+        transform: rotate(38deg);
+    }
+
+    .do-header {
+        height: 110px;
+        background: rgba(255,255,255,.78);
+        backdrop-filter: blur(18px);
+        display: grid;
+        grid-template-columns: 1fr 190px 170px;
+        align-items: center;
+        gap: 26px;
+        padding: 0 48px;
+        border-bottom: 3px solid #25b884;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        box-shadow: 0 10px 28px rgba(0,91,51,.10);
+    }
+
+    .mode-badge {
+        display: inline-block;
+        padding: 9px 18px;
+        border-radius: 8px;
+        font-weight: 900;
+        letter-spacing: 1px;
+    }
+
+    .mode-badge.practice {
+        background: #d9ffea;
+        color: #007a45;
+    }
+
+    .mode-badge.mock {
+        background: #ffe1e6;
+        color: #d7192a;
+    }
+
+    .do-header h2 {
+        display: inline-block;
+        margin: 0 0 0 18px;
+        font-size: 28px;
+        font-weight: 900;
+        color: #132238;
+    }
+
+    .timer-box {
+        text-align: center;
+        padding: 10px 18px;
+        border-radius: 18px;
+        background: rgba(255,255,255,.62);
+        border: 1px solid rgba(0,107,63,.12);
+    }
+
+    .timer-box small {
+        display: block;
+        color: #8190a6;
+        font-weight: 900;
+        letter-spacing: 1px;
+        font-size: 13px;
+    }
+
+    .timer-box b {
+        font-size: 38px;
+        color: #008e58;
+        line-height: 1;
+    }
+
+    .submit-btn {
+        border: 0;
+        border-radius: 16px;
+        padding: 18px 28px;
+        color: white;
+        font-size: 22px;
+        font-weight: 900;
+        background: linear-gradient(135deg, #007a45, #005f36);
+        box-shadow: 0 12px 26px rgba(0,91,51,.25);
+        transition: .2s;
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 30px rgba(0,91,51,.32);
+    }
+
+    .question-wrapper {
+        max-width: 1000px;
+        margin: 44px auto 70px;
+        padding: 0 20px;
+    }
+
+    .question-card {
+        position: relative;
+        background: rgba(255,255,255,.78);
+        backdrop-filter: blur(18px);
+        border: 1px solid rgba(0,107,63,.16);
+        border-radius: 28px;
+        padding: 38px;
+        display: grid;
+        grid-template-columns: 60px 1fr;
+        gap: 26px;
+        margin-bottom: 34px;
+        box-shadow: 0 16px 40px rgba(0,91,51,.12);
+        overflow: hidden;
+    }
+
+    .question-card::before {
+        content: "";
+        position: absolute;
+        width: 160px;
+        height: 160px;
+        right: -60px;
+        top: -70px;
+        border-radius: 50%;
+        background: rgba(0,168,107,.10);
+    }
+
+    .question-no {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: linear-gradient(135deg,#eafff3,#d7f8e7);
+        color: #006b3f;
+        display: grid;
+        place-items: center;
+        font-size: 20px;
+        font-weight: 900;
+        box-shadow: inset 0 -2px 0 rgba(0,0,0,.04);
+    }
+
+    .question-content h3 {
+        margin: 8px 0 24px;
+        font-size: 27px;
+        font-weight: 900;
+        color: #102033;
+        line-height: 1.45;
+    }
+
+    .option-list {
+        display: grid;
+        gap: 16px;
+    }
+
+    .option-item {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        border: 1px solid rgba(0,107,63,.16);
+        border-radius: 16px;
+        padding: 18px 22px;
+        font-size: 21px;
+        cursor: pointer;
+        background: rgba(255,255,255,.76);
+        box-shadow: 0 6px 18px rgba(15,23,42,.04);
+        transition: .2s;
+    }
+
+    .option-item b {
+        color: #7b8ba4;
+        min-width: 34px;
+        font-weight: 900;
+    }
+
+    .option-item:hover {
+        transform: translateY(-2px);
+        border-color: #25b884;
+        background: #f3fff8;
+        box-shadow: 0 10px 22px rgba(0,91,51,.10);
+    }
+
+    .option-item.selected {
+        border: 2px solid #25b884;
+        background: linear-gradient(135deg,#eafff3,#ffffff);
+    }
+
+    .option-item.correct {
+        border: 2px solid #00a86b;
+        background: linear-gradient(135deg,#dffff0,#baf7db);
+        color: #006b3f;
+    }
+
+    .option-item.correct::after {
+        content: "✓";
+        margin-left: auto;
+        font-size: 26px;
+        font-weight: 900;
+        color: #008e58;
+    }
+
+    .option-item.wrong {
+        border: 2px solid #e11d2e;
+        background: linear-gradient(135deg,#ffe1e6,#fff1f2);
+        color: #b11222;
+    }
+
+    .feedback {
+        margin-top: 18px;
+        font-size: 20px;
+        font-weight: 900;
+    }
+
+    .essay-box {
+        width: 100%;
+        border: 1px solid rgba(0,107,63,.18);
+        border-radius: 18px;
+        padding: 18px;
+        font-size: 19px;
+        background: rgba(255,255,255,.82);
+        outline: none;
+    }
+
+    .essay-box:focus {
+        border-color: #25b884;
+        box-shadow: 0 0 0 4px rgba(37,184,132,.12);
+    }
+
+    .essay-upload {
+        display: flex;
+        gap: 14px;
+        margin-top: 16px;
+        flex-wrap: wrap;
+    }
+
+    .essay-upload label,
+    .hint-btn {
+        border: 1px solid rgba(0,107,63,.18);
+        background: rgba(255,255,255,.82);
+        padding: 13px 18px;
+        border-radius: 14px;
+        cursor: pointer;
+        font-weight: 900;
+        color: #006b3f;
+    }
+
+    .hint-box {
+        display: none;
+        margin-top: 16px;
+        padding: 18px;
+        background: #eefcf6;
+        border: 1px solid #b8e6d6;
+        border-radius: 16px;
+        color: #006b3f;
+    }
+
+    .processing {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15,23,42,.82);
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .processing-card {
+        width: 620px;
+        background: rgba(255,255,255,.94);
+        border-radius: 26px;
+        padding: 54px;
+        text-align: center;
+        border-top: 8px solid #25b884;
+        box-shadow: 0 0 35px rgba(37,184,132,.42);
+    }
+
+    .processing-card h2 {
+        font-size: 32px;
+        font-weight: 900;
+    }
+
+    .processing-card p {
+        font-size: 21px;
+        color: #66758c;
+    }
+
+    @@media (max-width: 900px) {
+        .do-header {
+            grid-template-columns: 1fr;
+            height: auto;
+            padding: 22px;
+        }
+
+        .question-card {
+            grid-template-columns: 1fr;
+            padding: 26px;
+        }
+
+        .question-wrapper {
+            margin-top: 26px;
+        }
+    }
+
+    .explain-after-answer {
+        display: none;
+        margin-top: 18px;
+        padding: 18px 20px;
+        border-radius: 16px;
+        background: #fff8ec;
+        border: 1px solid #ffd8a8;
+        color: #6b4f1d;
+    }
+
+        .explain-after-answer b {
+            color: #92400e;
+        }
+
+        .explain-after-answer p {
+            margin: 8px 0 0;
+            line-height: 1.6;
+        }
+</style>
+
+<script>
+    const isMock = "@Model.Mode" === "mock";
+    let durationSeconds = @Model.DurationMinutes * 60;
+    let practiceSeconds = 0;
+
+    function renderTime(total) {
+        const m = Math.floor(total / 60).toString().padStart(2, "0");
+        const s = (total % 60).toString().padStart(2, "0");
+        document.getElementById("timer").innerText = `${m}:${s}`;
+    }
+
+    if (isMock) {
+        renderTime(durationSeconds);
+        document.querySelector(".timer-box b").style.color = "#dc1f2e";
+
+        const countdown = setInterval(() => {
+            durationSeconds--;
+            renderTime(durationSeconds);
+
+            if (durationSeconds <= 0) {
+                clearInterval(countdown);
+                document.getElementById("examForm").submit();
+            }
+        }, 1000);
+    } else {
+        setInterval(() => {
+            practiceSeconds++;
+            renderTime(practiceSeconds);
+        }, 1000);
+    }
+
+    document.querySelectorAll(".option-item").forEach(item => {
+        item.addEventListener("click", function () {
+
+            const card = this.closest(".question-card");
+            const mode = card.dataset.mode;
+            const correct = (card.dataset.correct || "").trim().toUpperCase();
+            const input = this.querySelector("input");
+
+            // nếu câu luyện tập đã chọn rồi thì thôi
+            if (mode === "practice" && card.dataset.locked === "true")
+                return;
+
+            // bỏ selected cũ
+            card.querySelectorAll(".option-item").forEach(x => {
+                x.classList.remove("selected");
+            });
+
+            this.classList.add("selected");
+            input.checked = true;
+
+            // chỉ luyện tập mới check đúng sai ngay
+            if (mode === "practice") {
+
+                card.dataset.locked = "true";
+
+                const selected = input.value.trim().toUpperCase();
+
+                card.querySelectorAll(".option-item").forEach(label => {
+                    const value = label.querySelector("input").value.trim().toUpperCase();
+
+                    if (value === correct)
+                        label.classList.add("correct");
+
+                    if (value === selected && selected !== correct)
+                        label.classList.add("wrong");
+                });
+
+                const fb = card.querySelector(".feedback");
+
+                if (selected === correct) {
+                    fb.innerHTML = "✅ Chính xác!";
+                    fb.style.color = "#007a45";
+                }
+                else {
+                    const correctInput =
+                        card.querySelector(`input[value='${correct}']`);
+
+                    const correctDisplay =
+                        correctInput?.dataset.display || correct;
+
+                    fb.innerHTML =
+                        "❌ Sai rồi. Đáp án đúng là " + correctDisplay;
+
+                    fb.style.color = "#dc1f2e";
+                }
+
+                // HIỆN GIẢI THÍCH
+                const explain =
+                    card.querySelector(".explain-after-answer");
+
+                if (explain)
+                    explain.style.display = "block";
+            }
+        });
+    });
+
+    function toggleHint(i) {
+        const el = document.getElementById("hint-" + i);
+        el.style.display = el.style.display === "block" ? "none" : "block";
+    }
+
+    document.getElementById("examForm").addEventListener("submit", function () {
+        const hasEssay = document.querySelector(".question-card[data-type='2']") !== null;
+
+        if (hasEssay) {
+            document.getElementById("processing").style.display = "flex";
+        }
+    });
+</script>

@@ -11,6 +11,8 @@ builder.Logging.AddDebug();
 
 // Add services
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<VNUFLearning.Services.GeminiService>();
 
 // DB
 builder.Services.AddDbContext<VnufLearningContext>(options =>

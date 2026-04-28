@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VNUFLearning.Data;
 
@@ -11,9 +12,11 @@ using VNUFLearning.Data;
 namespace VNUFLearning.Migrations
 {
     [DbContext(typeof(VnufLearningContext))]
-    partial class VnuLearningContextModelSnapshot : ModelSnapshot
+    [Migration("20260428134801_AddAiGradingToExamDetail")]
+    partial class AddAiGradingToExamDetail
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

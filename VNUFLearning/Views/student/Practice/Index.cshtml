@@ -1,0 +1,223 @@
+﻿@model VNUFLearning.Controllers.Student.PracticeHomeViewModel
+
+@{
+    ViewData["Title"] = "Trung tâm luyện thi";
+    Layout = "~/Views/Shared/_LayoutStudent.cshtml";
+}
+
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/practice.css" asp-append-version="true" />
+}
+
+    <div class="practice-tabs">
+        <button type="button" class="practice-tab active" onclick="showPracticeTab('practice', this)">
+            🏋️ Luyện tập tự do
+        </button>
+
+        <button type="button" class="practice-tab" onclick="showPracticeTab('mock', this)">
+            ⏱️ Thi thử định kỳ
+        </button>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="practice-alert">@TempData["Error"]</div>
+    }
+
+    <section id="practiceTab">
+        <form asp-controller="Practice" asp-action="Start" method="post">
+            <div class="practice-card">
+                <h2>1. Chọn Học phần</h2>
+
+                <select name="SubjectId" class="practice-select" required>
+                    @foreach (var s in Model.Subjects)
+                    {
+                        <option value="@s.Value">@s.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="practice-card">
+                <h2>2. Cấu trúc bài luyện tập</h2>
+
+                <div class="practice-option-grid">
+                    <label class="practice-option active">
+                        <input type="radio" name="StructureType" value="mixed" checked hidden />
+                        <span>🔀</span>
+                        <b>Hỗn hợp</b>
+                    </label>
+
+                    <label class="practice-option">
+                        <input type="radio" name="StructureType" value="mcq" hidden />
+                        <span>☷</span>
+                        <b>Chỉ Trắc nghiệm</b>
+                    </label>
+
+                    <label class="practice-option">
+                        <input type="radio" name="StructureType" value="essay" hidden />
+                        <span>✒️</span>
+                        <b>Chỉ Tự luận</b>
+                    </label>
+                </div>
+            </div>
+
+            <div class="practice-card">
+                <h2>3. Số lượng câu hỏi</h2>
+
+                <div class="practice-count-list">
+                    <label class="practice-count active">
+                        <input type="radio" name="QuestionCount" value="2" checked hidden />
+                        2 Câu
+                    </label>
+
+                    <label class="practice-count">
+                        <input type="radio" name="QuestionCount" value="4" hidden />
+                        4 Câu
+                    </label>
+
+                    <label class="practice-count">
+                        <input type="radio" name="QuestionCount" value="6" hidden />
+                        6 Câu
+                    </label>
+
+                    <label class="practice-count">
+                        <input type="radio" name="QuestionCount" value="10" hidden />
+                        10 Câu
+                    </label>
+                </div>
+            </div>
+
+            <label class="practice-smart">
+                <input type="checkbox" name="SmartMode" value="true" />
+                <div>
+                    <b>Bật chế độ "Luyện tập thông minh" 🪄</b>
+                    <p>Hệ thống sẽ ưu tiên lấy lại các câu hỏi bạn đã từng làm sai.</p>
+                </div>
+            </label>
+
+            <div class="practice-summary">
+                <h2>Tổng quan</h2>
+
+                <div class="summary-row">
+                    <span>Nguồn câu hỏi:</span>
+                    <b>Ngân hàng luyện thi</b>
+                </div>
+
+                <div class="summary-row">
+                    <span>Báo đúng/sai:</span>
+                    <b>Tức thì</b>
+                </div>
+
+                <div class="summary-row">
+                    <span>Thời gian:</span>
+                    <b>Không giới hạn</b>
+                </div>
+
+                <button type="submit">Bắt đầu ôn tập →</button>
+            </div>
+        </form>
+    </section>
+
+    <section id="mockTab" style="display:none">
+        <div class="practice-info">
+            Trong chế độ Thi thử, đề thi được lấy từ danh sách đề giảng viên đã tạo và công khai.
+            Hệ thống sẽ đếm ngược thời gian và chỉ hiển thị kết quả sau khi nộp bài.
+        </div>
+    <div class="mock-search-box">
+        <input type="text"
+               id="mockSearchInput"
+               placeholder="Tìm theo tên đề hoặc tên môn học..." />
+
+        <button type="button" onclick="clearMockSearch()">Xóa</button>
+    </div>
+
+        @if (Model.MockExams == null || !Model.MockExams.Any())
+        {
+            <div class="practice-empty">
+                Chưa có đề thi thử nào được giảng viên công khai.
+            </div>
+        }
+        else
+        {
+            <div class="mock-grid">
+                @foreach (var exam in Model.MockExams)
+                {
+                <div class="mock-card"
+                     data-title="@exam.Title.ToLower()"
+                     data-subject="@exam.SubjectName.ToLower()">
+                    <div class="mock-subject">@exam.SubjectName</div>
+
+                        <h3>@exam.Title</h3>
+
+                        @if (!string.IsNullOrEmpty(exam.Description))
+                        {
+                            <p>@exam.Description</p>
+                        }
+
+                        <div class="mock-meta">
+                            <span>☷ @exam.TotalQuestions Câu</span>
+                            <span class="mock-time">⏱ @exam.DurationMinutes Phút</span>
+                        </div>
+
+                        <a href="/Student/Practice/Mock/@exam.ExamId">Vào phòng thi</a>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+</div>
+
+<script>
+    function showPracticeTab(tab, btn) {
+        document.getElementById("practiceTab").style.display = tab === "practice" ? "block" : "none";
+        document.getElementById("mockTab").style.display = tab === "mock" ? "block" : "none";
+
+        document.querySelectorAll(".practice-tab").forEach(x => x.classList.remove("active"));
+        btn.classList.add("active");
+    }
+
+    document.querySelectorAll(".practice-option").forEach(item => {
+        item.addEventListener("click", function () {
+            document.querySelectorAll(".practice-option").forEach(x => x.classList.remove("active"));
+            this.classList.add("active");
+            this.querySelector("input").checked = true;
+        });
+    });
+
+    document.querySelectorAll(".practice-count").forEach(item => {
+        item.addEventListener("click", function () {
+            document.querySelectorAll(".practice-count").forEach(x => x.classList.remove("active"));
+            this.classList.add("active");
+            this.querySelector("input").checked = true;
+        });
+    });
+    const mockSearchInput = document.getElementById("mockSearchInput");
+
+    if (mockSearchInput) {
+        mockSearchInput.addEventListener("input", function () {
+            const keyword = this.value.trim().toLowerCase();
+            const cards = document.querySelectorAll(".mock-card");
+
+            cards.forEach(card => {
+                const title = card.dataset.title || "";
+                const subject = card.dataset.subject || "";
+
+                const matched = title.includes(keyword) || subject.includes(keyword);
+
+                card.style.display = matched ? "block" : "none";
+            });
+        });
+    }
+
+    function clearMockSearch() {
+        const input = document.getElementById("mockSearchInput");
+        if (!input) return;
+
+        input.value = "";
+
+        document.querySelectorAll(".mock-card").forEach(card => {
+            card.style.display = "block";
+        });
+    }
+</script>

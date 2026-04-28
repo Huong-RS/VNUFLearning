@@ -16,6 +16,8 @@ public partial class ExamDetail
     public bool? IsCorrect { get; set; }
 
     public virtual ExamResult ExamResult { get; set; } = null!;
-
+    public double? EssayScore { get; set; }
+    public double? SimilarityPercent { get; set; }
+    public string? AiFeedback { get; set; }
     public virtual Question Question { get; set; } = null!;
 }

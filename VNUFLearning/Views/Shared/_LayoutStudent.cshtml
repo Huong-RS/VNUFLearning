@@ -1,12 +1,8 @@
 ﻿@{
-    var path = Context?.Request?.Path.Value?.ToLower() ?? "";
-    var displayName = User?.FindFirst("FullName")?.Value
-                      ?? User?.Identity?.Name
-                      ?? "Sinh viên";
-
-    var avatar = User?.FindFirst("AvatarUrl")?.Value;
+    var path = Context.Request.Path.Value?.ToLower() ?? "";
+    var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "Sinh viên";
+    var initials = string.Join("", fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).TakeLast(2).Select(x => x[0])).ToUpper();
 }
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -15,92 +11,91 @@
     <title>@ViewData["Title"] - Sinh viên VNUF</title>
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    @await RenderSectionAsync("Styles", required: false)
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 
+
 <body>
-    <div class="d-flex">
-        <nav class="vnuf-sidebar">
+    <div class="vnuf-app">
+        <aside class="vnuf-sidebar">
             <a href="/Student/Dashboard" class="sidebar-brand">
-                <div class="brand-icon">
-                    <i class="fa-solid fa-user-graduate"></i>
+                <div class="brand-logo">
+                    <i class="fa-solid fa-leaf"></i>
                 </div>
-                <span>Student <span style="color:#7cf3b0;">VNUF</span></span>
+                <div class="brand-text">
+                    Student<br />
+                    <span>VNUF</span>
+                </div>
             </a>
 
-            <div class="sidebar-menu">
+            <div class="menu-section">
                 <div class="menu-title">Hệ thống</div>
 
-                <a class="menu-link @(path.Contains("/student/dashboard") ? "active" : "")"
-                   href="/Student/Dashboard">
+                <a href="/Student/Dashboard" class="menu-link @(path.Contains("/student/dashboard") ? "active" : "")">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>Dashboard</span>
                 </a>
 
-                <a class="menu-link @(path.Contains("/student/profile") ? "active" : "")"
-                   href="/Student/Profile">
-                    <i class="fa-solid fa-id-card"></i>
-                    <span>Hồ sơ cá nhân</span>
+                <a href="/Student/Profile" class="menu-link @(path.Contains("/student/profile") ? "active" : "")">
+                    <i class="fa-solid fa-user"></i>
+                    <span>Profile</span>
                 </a>
+            </div>
 
+            <div class="menu-section">
                 <div class="menu-title">Học tập</div>
 
-                <a class="menu-link @(path.Contains("/student/practice") ? "active" : "")"
-                   href="/Student/Practice">
-                    <i class="fa-solid fa-laptop-code"></i>
+                <a href="/Student/Practice" class="menu-link @(path.Contains("/student/practice") ? "active" : "")">
+                    <i class="fa-solid fa-list-check"></i>
                     <span>Luyện thi</span>
                 </a>
 
-                <a class="menu-link @(path.Contains("/student/documents") ? "active" : "")"
-                   href="/Student/Documents">
-                    <i class="fa-solid fa-folder-open"></i>
-                    <span>Thư viện học liệu</span>
+                <a href="/Student/Documents" class="menu-link @(path.Contains("/student/documents") ? "active" : "")">
+                    <i class="fa-solid fa-folder"></i>
+                    <span>Material Library</span>
                 </a>
 
-                <a class="menu-link @(path.Contains("/student/result") ? "active" : "")"
-                   href="/Student/Result">
+                <a href="/Student/History" class="menu-link @(path.Contains("/student/history") ? "active" : "")">
                     <i class="fa-solid fa-clock-rotate-left"></i>
-                    <span>Lịch sử học tập</span>
+                    <span>Study History</span>
                 </a>
+            </div>
 
+            <div class="menu-section">
                 <div class="menu-title">Cộng đồng</div>
 
-                <a class="menu-link @(path.Contains("/student/blog") ? "active" : "")"
-                   href="/Student/Blog">
-                    <i class="fa-solid fa-comments"></i>
+                <a href="/Student/Blog" class="menu-link @(path.Contains("/student/blog") ? "active" : "")">
+                    <i class="fa-solid fa-file-lines"></i>
                     <span>Blog</span>
                 </a>
             </div>
-        </nav>
+        </aside>
 
-        <div class="main-content">
-            <header class="top-header">
-                <h4>@ViewData["Title"]</h4>
+        <main class="vnuf-main">
+            <header class="vnuf-topbar">
+                <h4 class="topbar-title">@ViewData["Title"]</h4>
 
-                <div class="top-user-box">
-                    <div class="top-user-meta">
-                        <div class="top-user-name">@displayName</div>
-                        <div class="top-user-role">Sinh viên</div>
+                <div class="topbar-user">
+                    <div class="topbar-user-info">
+                        <div class="topbar-user-name">@fullName</div>
+                        <div class="topbar-user-role">Sinh viên</div>
                     </div>
 
-                    <img src="@(string.IsNullOrWhiteSpace(avatar)
-                                 ? $"https://ui-avatars.com/api/?name={displayName}&background=005b33&color=fff"
-                                 : avatar)"
-                         class="top-avatar"
-                         alt="Avatar" />
+                    <div class="topbar-avatar">@initials</div>
 
-                    <a href="/Account/Logout" class="btn btn-outline-danger logout-btn">
-                        <i class="fa fa-right-from-bracket me-1"></i> Đăng xuất
+                    <a href="/Account/Logout" class="btn btn-outline-danger rounded-4 fw-bold">
+                        <i class="fa-solid fa-right-from-bracket me-1"></i> Đăng xuất
                     </a>
                 </div>
             </header>
 
-            <main class="flex-grow-1 p-4 p-md-5">
+            <div class="vnuf-page">
                 @RenderBody()
-            </main>
-        </div>
+            </div>
+        </main>
     </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

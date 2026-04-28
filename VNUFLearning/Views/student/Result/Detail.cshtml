@@ -1,0 +1,149 @@
+﻿@model VNUFLearning.Models.ExamResult
+
+@{
+    ViewData["Title"] = "Chi tiết bài làm";
+
+    var total = Model.ExamDetails.Count;
+    var correct = Model.ExamDetails.Count(x => x.IsCorrect == true);
+    var wrong = Model.ExamDetails.Count(x => x.IsCorrect == false);
+}
+
+<link rel="stylesheet" href="/css/result-detail.css" />
+
+<div class="result-detail-page">
+    <div class="result-hero">
+        <div>
+            <a href="/Student/Practice" class="back-link">← Quay lại luyện thi</a>
+            <h1>Chi tiết bài làm</h1>
+            <p>@Model.Subject.SubjectName</p>
+        </div>
+
+        <div class="score-box">
+            <span>Điểm</span>
+            <strong>@(Model.Score?.ToString("0.##") ?? "--")<small>/10</small></strong>
+        </div>
+    </div>
+
+    <div class="result-stats">
+        <div class="stat-item">
+            <span>Tổng câu</span>
+            <b>@total</b>
+        </div>
+
+        <div class="stat-item correct">
+            <span>Câu đúng</span>
+            <b>@correct</b>
+        </div>
+
+        <div class="stat-item wrong">
+            <span>Câu sai</span>
+            <b>@wrong</b>
+        </div>
+    </div>
+
+    <div class="question-list">
+        @foreach (var item in Model.ExamDetails.Select((d, i) => new { d, i }))
+        {
+            var q = item.d.Question;
+            var isCorrect = item.d.IsCorrect == true;
+            var isWrong = item.d.IsCorrect == false;
+
+            <div class="review-card @(isCorrect ? "is-correct" : isWrong ? "is-wrong" : "is-essay")">
+                <div class="question-number">@(item.i + 1)</div>
+
+                <div class="review-content">
+                    <div class="review-head">
+                        <h3>@q.Content</h3>
+
+                        @if (q.QuestionType == 1)
+                        {
+                            if (isCorrect)
+                            {
+                                <span class="status correct">Đúng</span>
+                            }
+                            else
+                            {
+                                <span class="status wrong">Sai</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="status essay">Tự luận</span>
+                        }
+                    </div>
+
+                    @if (q.QuestionType == 1)
+                    {
+                        <div class="option-review">
+                            <div class="option @(q.CorrectAnswer == "A" ? "right-answer" : "") @(item.d.UserAnswer == "A" && item.d.IsCorrect == false ? "wrong-answer" : "")">
+                                <b>A.</b> @q.OptionA
+                            </div>
+
+                            <div class="option @(q.CorrectAnswer == "B" ? "right-answer" : "") @(item.d.UserAnswer == "B" && item.d.IsCorrect == false ? "wrong-answer" : "")">
+                                <b>B.</b> @q.OptionB
+                            </div>
+
+                            <div class="option @(q.CorrectAnswer == "C" ? "right-answer" : "") @(item.d.UserAnswer == "C" && item.d.IsCorrect == false ? "wrong-answer" : "")">
+                                <b>C.</b> @q.OptionC
+                            </div>
+
+                            <div class="option @(q.CorrectAnswer == "D" ? "right-answer" : "") @(item.d.UserAnswer == "D" && item.d.IsCorrect == false ? "wrong-answer" : "")">
+                                <b>D.</b> @q.OptionD
+                            </div>
+                        </div>
+
+                        <div class="answer-row">
+                            <div>
+                                <span>Bạn chọn</span>
+                                <b>@(string.IsNullOrEmpty(item.d.UserAnswer) ? "Chưa chọn" : item.d.UserAnswer)</b>
+                            </div>
+
+                            <div>
+                                <span>Đáp án đúng</span>
+                                <b>@q.CorrectAnswer</b>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="essay-block">
+                            <span>Bài làm của bạn</span>
+                            <p>@(string.IsNullOrWhiteSpace(item.d.UserAnswer) ? "Chưa trả lời" : item.d.UserAnswer)</p>
+                        </div>
+
+                        <div class="essay-block sample">
+                            <span>Đáp án mẫu</span>
+                            <p>@q.CorrectAnswer</p>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(item.d.AiFeedback))
+                        {
+                            var aiText = item.d.AiFeedback;
+
+                            if (aiText.Contains("\"error\"") || aiText.Contains("RESOURCE_EXHAUSTED") || aiText.Contains("TooManyRequests"))
+                            {
+                                aiText = "Gemini API đã vượt quá giới hạn miễn phí. Bài làm đã được lưu, nhưng AI chưa thể chấm ở thời điểm này. Vui lòng thử lại sau.";
+                            }
+
+                            <div class="explain-box">
+                                <b>Nhận xét AI:</b>
+                                <p style="white-space: pre-line">@aiText</p>
+                            </div>
+                        }
+                    }
+                    <div class="explain-box">
+                        <b>Giải thích:</b>
+
+                        @if (!string.IsNullOrWhiteSpace(q.Explaination))
+                        {
+                            <p>@q.Explaination</p>
+                        }
+                        else
+                        {
+                            <p>Chưa có giải thích cho câu hỏi này.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

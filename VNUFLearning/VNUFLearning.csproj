@@ -20,6 +20,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 		<PackageReference Include="OfficeOpenXml.Core.ExcelPackage" Version="1.0.0" />
 		<PackageReference Include="OfficeOpenXml.Extends" Version="1.0.6" />
 	</ItemGroup>

@@ -1,6 +1,7 @@
 ﻿@{
-    var path = Context?.Request?.Path.Value?.ToLower() ?? "";
-    var displayName = User?.Identity?.Name ?? "Admin";
+    var path = Context.Request.Path.Value?.ToLower() ?? "";
+    var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "Admin";
+    var initials = string.Join("", fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).TakeLast(2).Select(x => x[0])).ToUpper();
 }
 
 <!DOCTYPE html>
@@ -16,79 +17,85 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 
+
 <body>
-    <div class="d-flex">
-        <nav class="vnuf-sidebar">
+    <div class="vnuf-app">
+        <aside class="vnuf-sidebar">
             <a href="/Admin/Dashboard" class="sidebar-brand">
-                <div class="brand-icon">
+                <div class="brand-logo">
                     <i class="fa-solid fa-leaf"></i>
                 </div>
-                <span>Admin <span style="color:#7cf3b0;">VNUF</span></span>
+                <div class="brand-text">
+                    Admin<br />
+                    <span>VNUF</span>
+                </div>
             </a>
 
-            <div class="sidebar-menu">
+            <div class="menu-section">
                 <div class="menu-title">Hệ thống</div>
 
-                <a class="menu-link @(path.Contains("/admin/dashboard") ? "active" : "")" href="/Admin/Dashboard">
+                <a href="/Admin/Dashboard" class="menu-link @(path.Contains("/admin/dashboard") ? "active" : "")">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>Dashboard</span>
                 </a>
 
-                <a class="menu-link @(path.Contains("/admin/users") ? "active" : "")" href="/Admin/Users">
+                <a href="/Admin/Users" class="menu-link @(path.Contains("/admin/users") ? "active" : "")">
                     <i class="fa-solid fa-users"></i>
                     <span>Quản lý người dùng</span>
                 </a>
+            </div>
 
+            <div class="menu-section">
                 <div class="menu-title">Học tập & Thi cử</div>
 
-                <a class="menu-link @(path.Contains("/admin/subjects") ? "active" : "")" href="/Admin/Subjects">
+                <a href="/Admin/Subjects" class="menu-link @(path.Contains("/admin/subjects") ? "active" : "")">
                     <i class="fa-solid fa-book-open"></i>
                     <span>Quản lý môn học</span>
                 </a>
 
-                <a class="menu-link @(path.Contains("/admin/questions") ? "active" : "")" href="/Admin/Questions">
+                <a href="/Admin/Questions" class="menu-link @(path.Contains("/admin/questions") ? "active" : "")">
                     <i class="fa-solid fa-database"></i>
                     <span>Ngân hàng câu hỏi</span>
                 </a>
 
-                <a class="menu-link @(path.Contains("/admin/documents") ? "active" : "")" href="/Admin/Documents">
+                <a href="/Admin/Documents" class="menu-link @(path.Contains("/admin/documents") ? "active" : "")">
                     <i class="fa-solid fa-folder-open"></i>
                     <span>Quản lý học liệu</span>
                 </a>
+            </div>
 
+            <div class="menu-section">
                 <div class="menu-title">Báo cáo</div>
 
-                <a class="menu-link @(path.Contains("/admin/statistics") ? "active" : "")" href="/Admin/Statistics">
+                <a href="/Admin/Statistics" class="menu-link @(path.Contains("/admin/statistics") ? "active" : "")">
                     <i class="fa-solid fa-chart-column"></i>
                     <span>Thống kê</span>
                 </a>
             </div>
-        </nav>
+        </aside>
 
-        <div class="main-content">
-            <header class="top-header">
-                <h4>@ViewData["Title"]</h4>
+        <main class="vnuf-main">
+            <header class="vnuf-topbar">
+                <h4 class="topbar-title">@ViewData["Title"]</h4>
 
-                <div class="top-user-box">
-                    <div class="top-user-meta">
-                        <div class="top-user-name">@displayName</div>
-                        <div class="top-user-role">Quản trị viên</div>
+                <div class="topbar-user">
+                    <div class="topbar-user-info">
+                        <div class="topbar-user-name">@fullName</div>
+                        <div class="topbar-user-role">Quản trị viên</div>
                     </div>
 
-                    <img src="https://ui-avatars.com/api/?name=@displayName&background=005b33&color=fff"
-                         class="top-avatar"
-                         alt="Avatar" />
+                    <div class="topbar-avatar">@initials</div>
 
-                    <a href="/Account/Logout" class="btn btn-outline-danger logout-btn">
-                        <i class="fa fa-right-from-bracket me-1"></i> Đăng xuất
+                    <a href="/Account/Logout" class="btn btn-outline-danger rounded-4 fw-bold">
+                        <i class="fa-solid fa-right-from-bracket me-1"></i> Đăng xuất
                     </a>
                 </div>
             </header>
 
-            <main class="flex-grow-1 p-4 p-md-5">
+            <div class="vnuf-page">
                 @RenderBody()
-            </main>
-        </div>
+            </div>
+        </main>
     </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
