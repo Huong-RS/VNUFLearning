@@ -1,0 +1,1014 @@
+﻿@model List<VNUFLearning.Models.BlogPost>
+
+@{
+    Layout = "~/Views/Shared/_LayoutStudent.cshtml";
+    ViewData["Title"] = "Diễn đàn / Blog";
+
+    var myPendingPosts = ViewBag.MyPendingPosts as List<VNUFLearning.Models.BlogPost> ?? new();
+    var tab = ViewBag.Tab as string ?? "feed";
+    var keyword = ViewBag.Keyword as string ?? "";
+    int pendingCount = ViewBag.PendingCount ?? 0;
+    int currentStudentId = ViewBag.CurrentStudentId ?? 0;
+}
+
+<div class="student-blog-page">
+    <div class="blog-top">
+        <div>
+            <h1>Diễn đàn Lớp học</h1>
+            <p>Chia sẻ bài viết học tập, trao đổi tài liệu và thảo luận cùng giảng viên.</p>
+        </div>
+
+        <form method="get" action="/Student/Blog" class="blog-search">
+            <i class="fa fa-search"></i>
+            <input name="keyword" value="@keyword" placeholder="Tìm kiếm bài viết..." />
+        </form>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success rounded-4 fw-bold">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger rounded-4 fw-bold">@TempData["Error"]</div>
+    }
+
+    <div class="blog-tabs">
+        <a href="/Student/Blog?tab=feed" class="blog-tab @(tab == "feed" ? "active" : "")">
+            <i class="fa fa-newspaper"></i> Bảng tin
+        </a>
+
+        <a href="/Student/Blog?tab=pending" class="blog-tab @(tab == "pending" ? "active" : "")">
+            <i class="fa fa-clock"></i> Bài chờ duyệt
+            <span>@pendingCount</span>
+        </a>
+    </div>
+
+    @if (tab == "feed")
+    {
+        <div class="create-post-card">
+            <div class="avatar">SV</div>
+
+            <form method="post" action="/Student/Blog/Create" enctype="multipart/form-data" class="create-post-form">
+                @Html.AntiForgeryToken()
+
+                <input name="Title" class="post-title-input" placeholder="Tiêu đề bài viết..." />
+
+                <textarea name="Content"
+                          class="post-content-input"
+                          rows="3"
+                          placeholder="Bạn muốn chia sẻ điều gì với lớp?"></textarea>
+
+                <div class="create-actions">
+                    <div class="upload-row">
+                        <label class="upload-btn">
+                            <i class="fa fa-image"></i> Ảnh/Video
+                            <input type="file" name="imageFile" accept="image/*,video/mp4" hidden />
+                        </label>
+
+                        <label class="upload-btn">
+                            <i class="fa fa-paperclip"></i> Đính kèm
+                            <input type="file" name="attachmentFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar" hidden />
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn-post">Gửi duyệt</button>
+                </div>
+            </form>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="empty-box">
+                <i class="fa fa-newspaper"></i>
+                <h3>Chưa có bài viết nào</h3>
+                <p>Hãy là người đầu tiên chia sẻ bài viết học tập.</p>
+            </div>
+        }
+
+        @foreach (var item in Model)
+        {
+            <div class="post-card">
+                <div class="post-header">
+                    <div class="avatar">
+                        @item.Author.FullName.Substring(0, 1).ToUpper()
+                    </div>
+
+                    <div>
+                        <h4>@item.Author.FullName</h4>
+                        <p>@item.CreatedAt?.ToString("dd/MM/yyyy HH:mm") · <i class="fa fa-earth-asia"></i></p>
+                    </div>
+                    @if (item.AuthorId == currentStudentId)
+                    {
+                        <form method="post"
+                              action="/Student/Blog/Delete/@item.PostId"
+                              onsubmit="return confirm('Xóa bài viết này?');"
+                              class="ms-auto">
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit" class="delete-btn">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </form>
+                    }
+                </div>
+
+                <h3 class="post-title">@item.Title</h3>
+                <p class="post-content">@item.Content</p>
+
+                @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                {
+                    if (item.ImageUrl.EndsWith(".mp4"))
+                    {
+                        <video src="@item.ImageUrl" class="post-image" controls></video>
+                    }
+                    else
+                    {
+                        <img src="@item.ImageUrl" class="post-image" />
+                    }
+                }
+
+                @if (!string.IsNullOrWhiteSpace(item.AttachmentUrl))
+                {
+                    <a href="/Student/Blog/Download/@item.PostId" class="attachment-box">
+                        <div class="file-icon">
+                            <i class="fa fa-file"></i>
+                        </div>
+
+                        <div>
+                            <div class="fw-bold">@item.AttachmentName</div>
+                            <div class="text-muted small">
+                                @item.AttachmentType
+                                @if (item.AttachmentSize.HasValue)
+                                {
+                                    <span> · @((item.AttachmentSize.Value / 1024.0 / 1024.0).ToString("0.##")) MB</span>
+                                }
+                            </div>
+                        </div>
+                    </a>
+                }
+
+                <div class="post-meta">
+                    <span>
+                        <i class="fa fa-heart text-danger"></i>
+                        <span id="like-count-@item.PostId">@item.BlogLikes.Count</span>
+                    </span>
+
+                    <span>
+                        <span id="comment-count-@item.PostId">@item.Comments.Count(x => x.ParentCommentId == null)</span>
+                        bình luận
+                    </span>
+                </div>
+
+                <div class="post-action-bar">
+                    <button type="button"
+                            class="post-action-btn like-btn"
+                            data-post-id="@item.PostId"
+                            onclick="toggleLikeAjax(@item.PostId)">
+                        <i class="fa fa-heart"></i> Thả tim
+                    </button>
+
+                    <button type="button"
+                            class="post-action-btn"
+                            onclick="toggleComment(@item.PostId)">
+                        <i class="fa fa-comment"></i> Bình luận
+                    </button>
+                </div>
+
+                <div id="comment-@item.PostId" class="comment-panel">
+                    <div id="comment-list-@item.PostId">
+                        @foreach (var c in item.Comments.Where(x => x.ParentCommentId == null).OrderBy(x => x.CreatedAt))
+                        {
+                            <div class="comment-item" id="comment-item-@c.CommentId">
+                                <div class="comment-avatar">
+                                    @c.User.FullName.Substring(0, 1).ToUpper()
+                                </div>
+
+                                <div class="comment-right">
+                                    <div class="comment-bubble">
+                                        <div class="comment-name">@c.User.FullName</div>
+                                        <div>@c.Content</div>
+                                        @if (!string.IsNullOrWhiteSpace(c.ImageUrl))
+                                        {
+                                            if (c.ImageUrl.EndsWith(".mp4"))
+                                            {
+                                                <video src="@c.ImageUrl" class="comment-media" controls></video>
+                                            }
+                                            else
+                                            {
+                                                <img src="@c.ImageUrl" class="comment-media" />
+                                            }
+                                        }
+
+                                        @if (!string.IsNullOrWhiteSpace(c.AttachmentUrl))
+                                        {
+                                            var downloadUrl = Context.Request.Path.Value!.StartsWith("/Student")
+                                            ? $"/Student/Blog/DownloadCommentFile/{c.CommentId}"
+                                            : $"/Teacher/Blog/DownloadCommentFile/{c.CommentId}";
+
+                                            <a href="@downloadUrl" class="comment-attachment">
+                                                <i class="fa fa-file"></i>
+                                                <span>@c.AttachmentName</span>
+                                            </a>
+                                        }
+                                    </div>
+
+                                    <div class="comment-tools">
+                                        <button type="button" onclick="toggleReply(@c.CommentId)">Phản hồi</button>
+                                        <span>@c.CreatedAt?.ToString("HH:mm dd/MM")</span>
+                                        @if (c.UserId == currentStudentId)
+                                        {
+                                            <button type="button" onclick="deleteComment(@c.CommentId)">Xóa</button>
+                                        }
+                                    </div>
+
+                                    <form id="reply-@c.CommentId"
+                                          class="reply-form"
+                                          enctype="multipart/form-data"
+                                          onsubmit="return submitReplyAjax(event, @c.CommentId)">
+                                        @Html.AntiForgeryToken()
+
+                                        <input name="content" placeholder="Viết phản hồi..." />
+
+                                        <label class="comment-file-btn">
+                                            <i class="fa fa-image"></i>
+                                            <input type="file"
+                                                   name="imageFile"
+                                                   accept="image/*,video/mp4"
+                                                   hidden />
+                                        </label>
+
+                                        <label class="comment-file-btn">
+                                            <i class="fa fa-paperclip"></i>
+                                            <input type="file"
+                                                   name="attachmentFile"
+                                                   accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar"
+                                                   hidden />
+                                        </label>
+
+                                        <button type="submit">
+                                            <i class="fa fa-paper-plane"></i>
+                                        </button>
+                                    </form>
+
+                                    <div id="reply-list-@c.CommentId">
+                                        @foreach (var r in c.Replies.OrderBy(x => x.CreatedAt))
+                                        {
+                                            <div class="reply-item" id="comment-item-@r.CommentId">
+                                                <div class="comment-avatar small">
+                                                    @r.User.FullName.Substring(0, 1).ToUpper()
+                                                </div>
+
+                                                <div class="comment-bubble">
+                                                    <div class="comment-name">@r.User.FullName</div>
+                                                    <div>@r.Content</div>
+                                                    @if (!string.IsNullOrWhiteSpace(r.ImageUrl))
+                                                    {
+                                                        if (r.ImageUrl.EndsWith(".mp4"))
+                                                        {
+                                                            <video src="@r.ImageUrl" class="comment-media" controls></video>
+                                                        }
+                                                        else
+                                                        {
+                                                            <img src="@r.ImageUrl" class="comment-media" />
+                                                        }
+                                                    }
+
+                                                    @if (!string.IsNullOrWhiteSpace(r.AttachmentUrl))
+                                                    {
+                                                        var downloadUrl = Context.Request.Path.Value!.StartsWith("/Student")
+                                                        ? $"/Student/Blog/DownloadCommentFile/{r.CommentId}"
+                                                        : $"/Teacher/Blog/DownloadCommentFile/{r.CommentId}";
+
+                                                        <a href="@downloadUrl" class="comment-attachment">
+                                                            <i class="fa fa-file"></i>
+                                                            <span>@r.AttachmentName</span>
+                                                        </a>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <form class="comment-compose" enctype="multipart/form-data" onsubmit="return submitCommentAjax(event, @item.PostId)">
+                        @Html.AntiForgeryToken()
+
+                        <div class="comment-avatar">SV</div>
+
+                        <input name="content" placeholder="Viết bình luận công khai..." />
+                        <label class="comment-file-btn">
+                            <i class="fa fa-image"></i>
+                            <input type="file" name="imageFile" accept="image/*,video/mp4" hidden />
+                        </label>
+
+                        <label class="comment-file-btn">
+                            <i class="fa fa-paperclip"></i>
+                            <input type="file" name="attachmentFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar" hidden />
+                        </label>
+
+                        <button type="submit">
+                            <i class="fa fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="pending-note">
+            <i class="fa fa-circle-info"></i>
+            Bài viết của bạn sẽ hiển thị công khai sau khi được giảng viên phê duyệt.
+        </div>
+
+        @if (!myPendingPosts.Any())
+        {
+            <div class="empty-box">
+                <i class="fa fa-check-circle"></i>
+                <h3>Không có bài chờ duyệt</h3>
+                <p>Bạn chưa gửi bài viết nào đang chờ phê duyệt.</p>
+            </div>
+        }
+
+        @foreach (var item in myPendingPosts)
+        {
+            <div class="pending-card">
+                <div class="post-header">
+                    <div class="avatar orange">
+                        @item.Author.FullName.Substring(0, 1).ToUpper()
+                    </div>
+
+                    <div>
+                        <h4>@item.Author.FullName</h4>
+                        <p>Gửi lúc @item.CreatedAt?.ToString("HH:mm dd/MM/yyyy")</p>
+                    </div>
+
+                    <span class="pending-badge">Chờ duyệt</span>
+                </div>
+
+                <h3 class="post-title">@item.Title</h3>
+                <p class="post-content">@item.Content</p>
+            </div>
+        }
+    }
+</div>
+
+<style>
+    .student-blog-page {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding-bottom: 60px;
+    }
+
+    .blog-top {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 24px;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+        .blog-top h1 {
+            font-size: 34px;
+            font-weight: 900;
+            color: #0f172a;
+            margin: 0;
+        }
+
+        .blog-top p {
+            color: #64748b;
+            font-weight: 600;
+            margin: 6px 0 0;
+        }
+
+    .blog-search {
+        background: #f1f5f9;
+        border-radius: 999px;
+        padding: 13px 18px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+        .blog-search input {
+            width: 100%;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-weight: 700;
+        }
+
+    .blog-tabs {
+        background: white;
+        border-radius: 18px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        overflow: hidden;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 22px rgba(15,23,42,.08);
+    }
+
+    .blog-tab {
+        padding: 22px;
+        text-align: center;
+        text-decoration: none;
+        color: #64748b;
+        font-size: 21px;
+        font-weight: 900;
+        border-bottom: 4px solid transparent;
+    }
+
+        .blog-tab.active {
+            color: #059669;
+            border-bottom-color: #059669;
+        }
+
+        .blog-tab span {
+            background: #ef4444;
+            color: white;
+            border-radius: 999px;
+            padding: 4px 12px;
+            font-size: 15px;
+            margin-left: 8px;
+        }
+
+    .create-post-card,
+    .post-card,
+    .pending-card,
+    .empty-box {
+        background: white;
+        border-radius: 22px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 22px rgba(15,23,42,.08);
+    }
+
+    .create-post-card {
+        display: flex;
+        gap: 16px;
+    }
+
+    .create-post-form {
+        flex: 1;
+    }
+
+    .avatar,
+    .comment-avatar {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: #059669;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        flex-shrink: 0;
+    }
+
+        .avatar.orange {
+            background: #f59e0b;
+        }
+
+    .post-title-input,
+    .post-content-input {
+        width: 100%;
+        border: none;
+        outline: none;
+        background: #f1f5f9;
+        border-radius: 16px;
+        padding: 15px 18px;
+        font-weight: 700;
+    }
+
+    .post-content-input {
+        margin-top: 10px;
+        resize: vertical;
+    }
+
+    .create-actions {
+        border-top: 1px solid #e5e7eb;
+        margin-top: 16px;
+        padding-top: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .upload-row {
+        display: flex;
+        gap: 18px;
+    }
+
+    .upload-btn {
+        cursor: pointer;
+        font-weight: 900;
+        color: #64748b;
+    }
+
+        .upload-btn i {
+            color: #059669;
+            margin-right: 5px;
+        }
+
+    .btn-post {
+        border: none;
+        background: #059669;
+        color: white;
+        font-weight: 900;
+        border-radius: 12px;
+        padding: 12px 28px;
+    }
+
+    .post-header {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+        .post-header h4 {
+            margin: 0;
+            font-weight: 900;
+            color: #0f172a;
+        }
+
+        .post-header p {
+            margin: 2px 0 0;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+    .post-title {
+        font-weight: 900;
+        color: #0f172a;
+    }
+
+    .post-content {
+        font-size: 17px;
+        line-height: 1.6;
+        white-space: pre-line;
+    }
+
+    .post-image {
+        width: 100%;
+        max-height: 460px;
+        object-fit: contain;
+        border-radius: 18px;
+        background: #f8fafc;
+        margin-top: 14px;
+    }
+
+    .attachment-box {
+        margin-top: 14px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px;
+        border: 1px solid #dbe3ef;
+        border-radius: 16px;
+        text-decoration: none;
+        color: #0f172a;
+        background: #f8fafc;
+    }
+
+    .file-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        background: #fee2e2;
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .post-meta {
+        border-top: 1px solid #e5e7eb;
+        padding-top: 14px;
+        margin-top: 18px;
+        display: flex;
+        justify-content: space-between;
+        color: #64748b;
+        font-weight: 800;
+    }
+
+    .post-action-bar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        border-top: 1px solid #e5e7eb;
+        margin-top: 14px;
+    }
+
+    .post-action-btn {
+        width: 100%;
+        border: none;
+        background: white;
+        padding: 16px;
+        font-weight: 900;
+        color: #64748b;
+        font-size: 17px;
+    }
+
+        .post-action-btn:hover,
+        .like-btn.liked {
+            color: #ef4444;
+        }
+
+    .comment-panel {
+        display: none;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 18px;
+    }
+
+        .comment-panel.show {
+            display: block;
+        }
+
+    .comment-item,
+    .reply-item {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .reply-item {
+        margin-left: 44px;
+        margin-top: 10px;
+    }
+
+    .comment-avatar {
+        width: 42px;
+        height: 42px;
+        font-size: 14px;
+    }
+
+        .comment-avatar.small {
+            width: 34px;
+            height: 34px;
+            font-size: 12px;
+        }
+
+    .comment-right {
+        flex: 1;
+    }
+
+    .comment-bubble {
+        background: #f1f5f9;
+        padding: 11px 15px;
+        border-radius: 18px;
+        display: inline-block;
+        max-width: 100%;
+    }
+
+    .comment-name {
+        font-weight: 900;
+        margin-bottom: 3px;
+    }
+
+    .comment-tools {
+        display: flex;
+        gap: 12px;
+        margin-left: 12px;
+        margin-top: 4px;
+        color: #64748b;
+        font-size: 13px;
+    }
+
+        .comment-tools button {
+            border: none;
+            background: transparent;
+            color: #64748b;
+            font-weight: 800;
+            padding: 0;
+        }
+
+    .comment-compose,
+    .reply-form.show {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .comment-compose {
+        margin-top: 18px;
+    }
+
+    .reply-form {
+        display: none;
+        margin-top: 8px;
+    }
+
+        .comment-compose input,
+        .reply-form input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: #f1f5f9;
+            border-radius: 999px;
+            padding: 12px 16px;
+        }
+
+        .comment-compose button,
+        .reply-form button {
+            width: 42px;
+            height: 42px;
+            border: none;
+            border-radius: 50%;
+            background: #059669;
+            color: white;
+        }
+
+    .pending-note {
+        background: #fffbeb;
+        border: 1px solid #facc15;
+        color: #92400e;
+        padding: 18px 22px;
+        border-radius: 16px;
+        margin-bottom: 22px;
+        font-weight: 800;
+    }
+
+    .pending-badge {
+        margin-left: auto;
+        background: #fef3c7;
+        color: #b45309;
+        border-radius: 999px;
+        padding: 8px 18px;
+        font-weight: 900;
+    }
+
+    .empty-box {
+        text-align: center;
+        color: #64748b;
+        padding: 50px;
+    }
+
+        .empty-box i {
+            font-size: 46px;
+            color: #10b981;
+            margin-bottom: 16px;
+        }
+
+    .comment-file-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #eef2f7;
+        color: #059669;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+        .comment-file-btn:hover {
+            background: #dcfce7;
+        }
+
+    .comment-media {
+        display: block;
+        margin-top: 10px;
+        max-width: 280px;
+        max-height: 220px;
+        border-radius: 14px;
+        object-fit: cover;
+        background: #fff;
+    }
+
+    .comment-attachment {
+        margin-top: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #ffffff;
+        border: 1px solid #dbe3ef;
+        border-radius: 12px;
+        padding: 9px 12px;
+        text-decoration: none;
+        color: #0f172a;
+        font-weight: 700;
+    }
+</style>
+
+<script>
+    function getToken() {
+        const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+        return tokenInput ? tokenInput.value : "";
+    }
+
+    function toggleComment(id) {
+        const panel = document.getElementById("comment-" + id);
+        if (!panel) return;
+
+        panel.classList.toggle("show");
+
+        if (panel.classList.contains("show")) {
+            setTimeout(() => {
+                panel.scrollIntoView({ behavior: "smooth", block: "center" });
+            }, 150);
+        }
+    }
+
+    function toggleReply(id) {
+        const form = document.getElementById("reply-" + id);
+        if (!form) return;
+
+        form.classList.toggle("show");
+    }
+
+    async function toggleLikeAjax(postId) {
+        const response = await fetch(`/Student/Blog/ToggleLikeAjax/${postId}`, {
+            method: "POST",
+            headers: {
+                "RequestVerificationToken": getToken()
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById(`like-count-${postId}`).innerText = data.count;
+
+            const btn = document.querySelector(`.like-btn[data-post-id="${postId}"]`);
+            if (btn) {
+                btn.classList.toggle("liked", data.liked);
+            }
+        }
+    }
+    async function deleteComment(commentId) {
+        if (!confirm("Xóa bình luận này?")) return;
+
+        const response = await fetch(`/Student/Blog/DeleteComment/${commentId}`, {
+            method: "POST",
+            headers: {
+                "RequestVerificationToken": getToken()
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            const el = document.getElementById(`comment-item-${commentId}`);
+            if (el) el.remove();
+        }
+    }
+
+    async function submitCommentAjax(event, postId) {
+        event.preventDefault();
+
+        const form = event.target;
+        const input = form.querySelector('input[name="content"]');
+        const content = input.value.trim();
+        const imageFile = form.querySelector('input[name="imageFile"]').files.length;
+        const attachmentFile = form.querySelector('input[name="attachmentFile"]').files.length;
+
+        if (!content && imageFile === 0 && attachmentFile === 0) return false;
+
+        const body = new FormData(form);
+
+        const response = await fetch(`/Student/Blog/CommentAjax/${postId}`, {
+            method: "POST",
+            headers: {
+                "RequestVerificationToken": getToken()
+            },
+            body
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            const list = document.getElementById(`comment-list-${postId}`);
+
+            list.insertAdjacentHTML("beforeend", `
+                    <div class="comment-item" id="comment-item-${data.commentId}">
+                        <div class="comment-avatar">${data.avatar}</div>
+                        <div class="comment-right">
+                            <div class="comment-bubble">
+                                <div class="comment-name">${escapeHtml(data.userName)}</div>
+    <div>${escapeHtml(data.content || "")}</div>
+    ${renderCommentFiles(data)}
+    </div>
+
+                            <div class="comment-tools">
+                                <button onclick="toggleReply(${data.commentId})" type="button">Phản hồi</button>
+                                <span>${data.createdAt}</span>
+                            </div>
+
+                             <form id="reply-${data.commentId}"
+          class="reply-form"
+          enctype="multipart/form-data"
+          onsubmit="return submitReplyAjax(event, ${data.commentId})">
+        <input name="content" placeholder="Viết phản hồi..." />
+
+        <label class="comment-file-btn">
+            <i class="fa fa-image"></i>
+            <input type="file" name="imageFile" accept="image/*,video/mp4" hidden />
+        </label>
+
+        <label class="comment-file-btn">
+            <i class="fa fa-paperclip"></i>
+            <input type="file" name="attachmentFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar" hidden />
+        </label>
+
+        <button type="submit"><i class="fa fa-paper-plane"></i></button>
+    </form>
+
+                            <div id="reply-list-${data.commentId}"></div>
+                        </div>
+                    </div>
+                `);
+
+            input.value = "";
+            form.reset();
+
+            const countEl = document.getElementById(`comment-count-${postId}`);
+            countEl.innerText = parseInt(countEl.innerText || "0") + 1;
+        }
+
+        return false;
+    }
+
+    async function submitReplyAjax(event, commentId) {
+        event.preventDefault();
+
+        const form = event.target;
+        const input = form.querySelector('input[name="content"]');
+        const content = input.value.trim();
+        const imageFile = form.querySelector('input[name="imageFile"]')?.files.length || 0;
+        const attachmentFile = form.querySelector('input[name="attachmentFile"]')?.files.length || 0;
+
+        if (!content && imageFile === 0 && attachmentFile === 0) return false;
+
+        const body = new FormData(form);
+
+        const response = await fetch(`/Student/Blog/ReplyAjax/${commentId}`, {
+            method: "POST",
+            headers: {
+                "RequestVerificationToken": getToken()
+            },
+            body
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            const list = document.getElementById(`reply-list-${commentId}`);
+
+            list.insertAdjacentHTML("beforeend", `
+                    <div class="reply-item">
+                        <div class="comment-avatar small">${data.avatar}</div>
+                        <div class="comment-bubble">
+                            <div class="comment-name">${escapeHtml(data.userName)}</div>
+    <div>${escapeHtml(data.content || "")}</div>
+    ${renderCommentFiles(data)}
+    </div>
+                    </div>
+                `);
+
+            input.value = "";
+            form.reset();
+            form.classList.remove("show");
+        }
+
+        return false;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.innerText = text;
+        return div.innerHTML;
+    }
+    function renderCommentFiles(data) {
+        let html = "";
+
+        if (data.imageUrl) {
+            if (data.imageUrl.toLowerCase().endsWith(".mp4")) {
+                html += `<video src="${data.imageUrl}" class="comment-media" controls></video>`;
+            } else {
+                html += `<img src="${data.imageUrl}" class="comment-media" />`;
+            }
+        }
+
+        if (data.attachmentUrl) {
+            const prefix = location.pathname.toLowerCase().startsWith("/student")
+                ? "/Student/Blog/DownloadCommentFile/"
+                : "/Teacher/Blog/DownloadCommentFile/";
+
+            const id = data.commentId || data.parentId;
+
+            html += `
+                <a href="${prefix}${id}" class="comment-attachment">
+                    <i class="fa fa-file"></i>
+                    <span>${escapeHtml(data.attachmentName || "Tệp đính kèm")}</span>
+                </a>`;
+        }
+
+        return html;
+    }
+</script>

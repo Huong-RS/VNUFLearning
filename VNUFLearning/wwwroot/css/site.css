@@ -1074,3 +1074,94 @@ body {
     background: rgba(255,255,255,.9) !important;
     backdrop-filter: blur(12px);
 }
+.teacher-blog-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 0 60px;
+}
+
+.blog-top {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.create-post-card,
+.post-card,
+.pending-card,
+.empty-box,
+.blog-tabs {
+    width: 100%;
+}
+
+.create-post-card {
+    align-items: flex-start;
+}
+
+.post-title-input,
+.post-content-input {
+    background: #f1f5f9;
+    border: 1px solid transparent;
+}
+
+    .post-title-input:focus,
+    .post-content-input:focus {
+        border-color: #10b981;
+        background: #fff;
+    }
+
+.upload-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.upload-btn {
+    cursor: pointer;
+    font-weight: 800;
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .upload-btn i {
+        color: #059669;
+    }
+
+.attachment-box {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    border: 1px solid #dbe3ef;
+    border-radius: 16px;
+    text-decoration: none;
+    color: #0f172a;
+    background: #f8fafc;
+}
+
+.file-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 12px;
+    background: #fee2e2;
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+@media (max-width: 992px) {
+    .blog-top {
+        grid-template-columns: 1fr;
+    }
+
+    .blog-search {
+        width: 100%;
+    }
+}

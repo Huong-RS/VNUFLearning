@@ -243,26 +243,7 @@ namespace VNUFLearning.Controllers.Student
 
                         essayScore = Math.Round(aiResult.Score, 2);
                         similarityPercent = Math.Round(aiResult.Percent, 2);
-                        if (aiResult.IsError)
-                        {
-                            essayScore = null;
-                            similarityPercent = null;
-                            aiFeedback =
-                                "Gemini AI hiện chưa chấm được bài này.\n" +
-                                aiResult.Comment + "\n\n" +
-                                aiResult.Advice;
-                        }
-                        else
-                        {
-                            essayScore = Math.Round(aiResult.Score, 2);
-                            similarityPercent = Math.Round(aiResult.Percent, 2);
 
-                            aiFeedback =
-                                $"Mức độ đúng: {similarityPercent}%\n" +
-                                $"Điểm tự luận: {essayScore}/10\n\n" +
-                                $"Nhận xét: {aiResult.Comment}\n\n" +
-                                $"Góp ý: {aiResult.Advice}";
-                        }
                         aiFeedback =
                             $"Mức độ đúng: {similarityPercent}%\n" +
                             $"Điểm tự luận: {essayScore}/10\n\n" +

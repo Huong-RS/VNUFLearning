@@ -15,9 +15,8 @@ public partial class VnufLearningContext : DbContext
         : base(options)
     {
     }
-
     public virtual DbSet<BlogPost> BlogPosts { get; set; }
-
+    public virtual DbSet<BlogLike> BlogLikes { get; set; }
     public virtual DbSet<Comment> Comments { get; set; }
 
     public virtual DbSet<Document> Documents { get; set; }
@@ -73,6 +72,28 @@ public partial class VnufLearningContext : DbContext
                 .HasConstraintName("FK_Exams_Teacher");
         });
 
+        modelBuilder.Entity<BlogLike>(entity =>
+        {
+            entity.HasKey(e => e.LikeId);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasIndex(e => new { e.PostId, e.UserId })
+                .IsUnique();
+
+            entity.HasOne(e => e.Post)
+                .WithMany(p => p.BlogLikes)
+                .HasForeignKey(e => e.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
         modelBuilder.Entity<ExamQuestion>(entity =>
         {
             entity.HasKey(e => e.ExamQuestionId);
@@ -112,20 +133,27 @@ public partial class VnufLearningContext : DbContext
         modelBuilder.Entity<BlogPost>(entity =>
         {
             entity.HasKey(e => e.PostId).HasName("PK__BlogPost__AA126018EE206CC6");
+            entity.Property(e => e.ImageUrl).HasMaxLength(500);
 
+            entity.Property(e => e.IsPublished)
+                .HasDefaultValue(true);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Title).HasMaxLength(200);
             entity.Property(e => e.ViewCount).HasDefaultValue(0);
-
+            entity.Property(e => e.ImageUrl).HasMaxLength(500);
+            entity.Property(e => e.AttachmentUrl).HasMaxLength(500);
+            entity.Property(e => e.AttachmentName).HasMaxLength(255);
+            entity.Property(e => e.AttachmentType).HasMaxLength(50);
+            entity.Property(e => e.IsPublished).HasDefaultValue(true);
+            entity.Property(e => e.LikeCount).HasDefaultValue(0);
             entity.HasOne(d => d.Author).WithMany(p => p.BlogPosts)
                 .HasForeignKey(d => d.AuthorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__BlogPosts__Autho__5535A963");
         });
-
-        modelBuilder.Entity<Comment>(entity =>
+    modelBuilder.Entity<Comment>(entity =>
         {
             entity.HasKey(e => e.CommentId).HasName("PK__Comments__C3B4DFCADF1E1B0A");
 
@@ -133,7 +161,10 @@ public partial class VnufLearningContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-
+            entity.Property(e => e.ImageUrl).HasMaxLength(500);
+            entity.Property(e => e.AttachmentUrl).HasMaxLength(500);
+            entity.Property(e => e.AttachmentName).HasMaxLength(255);
+            entity.Property(e => e.AttachmentType).HasMaxLength(50);
             entity.HasOne(d => d.Post).WithMany(p => p.Comments)
                 .HasForeignKey(d => d.PostId)
                 .OnDelete(DeleteBehavior.ClientSetNull)

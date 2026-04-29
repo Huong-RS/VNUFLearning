@@ -1,0 +1,390 @@
+﻿@{
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    ViewData["Title"] = "Thống kê dữ liệu Hệ thống";
+
+    var chartLabels = System.Text.Json.JsonSerializer.Serialize(ViewBag.ChartLabels);
+    var chartData = System.Text.Json.JsonSerializer.Serialize(ViewBag.ChartData);
+}
+
+<div class="container-fluid">
+
+    <div class="mb-4">
+        <h1 class="fw-bold mb-1">Thống kê dữ liệu Hệ thống</h1>
+        <p class="text-muted mb-0">Theo dõi tổng quan người dùng, học liệu, câu hỏi và hoạt động luyện thi.</p>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-box">
+                <div>
+                    <div class="stat-label">Tổng người dùng</div>
+                    <div class="stat-number">@ViewBag.TotalUsers</div>
+                    <div class="stat-sub">
+                        <span class="text-primary">@ViewBag.TotalStudents SV</span>
+                        <span class="ms-3 text-primary">@ViewBag.TotalTeachers GV</span>
+                    </div>
+                </div>
+                <div class="stat-icon blue">
+                    <i class="fa fa-users"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-box">
+                <div>
+                    <div class="stat-label">Lượt nộp bài</div>
+                    <div class="stat-number">@ViewBag.TotalSubmissions</div>
+                    <div class="stat-sub text-success">
+                        <i class="fa fa-arrow-trend-up me-1"></i> dữ liệu thực tế
+                    </div>
+                </div>
+                <div class="stat-icon green">
+                    <i class="fa fa-paper-plane"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-box">
+                <div>
+                    <div class="stat-label">Tài nguyên học liệu</div>
+                    <div class="stat-number">@ViewBag.TotalDocuments</div>
+                    <div class="stat-sub text-warning">
+                        @ViewBag.TotalSubjects môn học · @ViewBag.TotalQuestions câu hỏi
+                    </div>
+                </div>
+                <div class="stat-icon orange">
+                    <i class="fa fa-folder-open"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-box danger">
+                <div>
+                    <div class="stat-label">Tài khoản bị khóa</div>
+                    <div class="stat-number text-danger">@ViewBag.TotalBlocked</div>
+                    <div class="stat-sub">Tổng tài khoản: @ViewBag.TotalUsers</div>
+                </div>
+                <div class="stat-icon red">
+                    <i class="fa fa-user-lock"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-xl-8">
+            <div class="chart-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="fw-bold mb-0">Hoạt động luyện thi 7 ngày qua</h3>
+                    <select class="form-select w-auto rounded-4 fw-bold">
+                        <option>7 Ngày qua</option>
+                    </select>
+                </div>
+
+                <canvas id="activityChart" height="120"></canvas>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="chart-card h-100">
+                <h3 class="fw-bold mb-4">Phân bổ Ngân hàng Câu hỏi</h3>
+                <canvas id="questionChart" height="220"></canvas>
+
+                <div class="d-flex justify-content-center gap-4 mt-4">
+                    <div>
+                        <span class="legend-dot blue-dot"></span> Trắc nghiệm
+                    </div>
+                    <div>
+                        <span class="legend-dot purple-dot"></span> Tự luận AI
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-7">
+            <div class="chart-card p-0 overflow-hidden">
+                <div class="p-4 d-flex justify-content-between align-items-center">
+                    <h3 class="fw-bold mb-0">Top Môn học có lượt thi cao nhất</h3>
+                    <a href="/Admin/Subjects" class="text-success fw-bold text-decoration-none">Xem tất cả</a>
+                </div>
+
+                <table class="table align-middle mb-0 stat-table">
+                    <thead>
+                        <tr>
+                            <th>Tên môn học</th>
+                            <th>Số câu hỏi</th>
+                            <th>Lượt làm bài</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int stt = 1;
+                        }
+
+                        @foreach (var item in ViewBag.TopSubjects)
+                        {
+                            <tr>
+                                <td class="fw-bold">@stt. @item.SubjectName</td>
+                                <td>@item.QuestionCount</td>
+                                <td class="text-success fw-bold">@item.SubmitCount</td>
+                            </tr>
+
+                            stt++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-xl-5">
+            <div class="chart-card">
+                <h3 class="fw-bold mb-4">Giao dịch / Cảnh báo Hệ thống</h3>
+
+                <div class="alert-row danger">
+                    <div class="alert-icon">
+                        <i class="fa fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">Kiểm tra dữ liệu AI Gemini</div>
+                        <div class="text-muted">Các bài tự luận cần rubric để chấm chính xác.</div>
+                    </div>
+                    <span class="ms-auto text-muted small">10p trước</span>
+                </div>
+
+                <div class="alert-row info">
+                    <div class="alert-icon">
+                        <i class="fa fa-user-plus"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">Tổng người dùng hiện tại: @ViewBag.TotalUsers</div>
+                        <div class="text-muted">Sinh viên: @ViewBag.TotalStudents, Giảng viên: @ViewBag.TotalTeachers.</div>
+                    </div>
+                    <span class="ms-auto text-muted small">2h trước</span>
+                </div>
+
+                <div class="alert-row success">
+                    <div class="alert-icon">
+                        <i class="fa fa-database"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">Ngân hàng câu hỏi: @ViewBag.TotalQuestions</div>
+                        <div class="text-muted">Trắc nghiệm: @ViewBag.McqCount, Tự luận: @ViewBag.EssayCount.</div>
+                    </div>
+                    <span class="ms-auto text-muted small">hôm nay</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-box {
+        background: #fff;
+        border-radius: 24px;
+        padding: 28px;
+        min-height: 160px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .06);
+        border: 1px solid #e8eef5;
+    }
+
+        .stat-box.danger {
+            background: #fff8f8;
+        }
+
+    .stat-label {
+        text-transform: uppercase;
+        color: #94a3b8;
+        font-weight: 900;
+        letter-spacing: .5px;
+        margin-bottom: 8px;
+    }
+
+    .stat-number {
+        font-size: 42px;
+        font-weight: 900;
+        color: #0f172a;
+        line-height: 1;
+        margin-bottom: 18px;
+    }
+
+    .stat-sub {
+        font-size: 16px;
+        font-weight: 700;
+        color: #64748b;
+    }
+
+    .stat-icon {
+        width: 68px;
+        height: 68px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+    }
+
+        .stat-icon.blue {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .stat-icon.green {
+            background: #ecfdf5;
+            color: #10b981;
+        }
+
+        .stat-icon.orange {
+            background: #fff7ed;
+            color: #f97316;
+        }
+
+        .stat-icon.red {
+            background: #ffe4e6;
+            color: #e11d48;
+        }
+
+    .chart-card {
+        background: #fff;
+        border-radius: 26px;
+        padding: 32px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .06);
+        border: 1px solid #e8eef5;
+    }
+
+    .legend-dot {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+
+    .blue-dot {
+        background: #3b82f6;
+    }
+
+    .purple-dot {
+        background: #8b5cf6;
+    }
+
+    .stat-table th {
+        background: #f8fafc;
+        color: #64748b;
+        text-transform: uppercase;
+        font-weight: 900;
+        padding: 18px 28px;
+    }
+
+    .stat-table td {
+        padding: 20px 28px;
+        font-size: 17px;
+        border-bottom: 1px solid #eef2f7;
+    }
+
+    .alert-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 18px 0;
+        border-bottom: 1px solid #eef2f7;
+    }
+
+        .alert-row:last-child {
+            border-bottom: none;
+        }
+
+    .alert-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .alert-row.danger .alert-icon {
+        background: #ffe4e6;
+        color: #e11d48;
+    }
+
+    .alert-row.info .alert-icon {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+
+    .alert-row.success .alert-icon {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const activityLabels = @Html.Raw(chartLabels);
+    const activityData = @Html.Raw(chartData);
+
+    const ctx = document.getElementById('activityChart');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: activityLabels,
+            datasets: [{
+                label: 'Lượt làm bài',
+                data: activityData,
+                fill: true,
+                borderWidth: 4,
+                tension: 0.45,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59,130,246,.22)',
+                pointRadius: 5,
+                pointBackgroundColor: '#ffffff',
+                pointBorderWidth: 3,
+                pointBorderColor: '#3b82f6'
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#eef2f7' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+
+    const qCtx = document.getElementById('questionChart');
+
+    new Chart(qCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Trắc nghiệm', 'Tự luận AI'],
+            datasets: [{
+                data: [@ViewBag.McqCount, @ViewBag.EssayCount],
+                backgroundColor: ['#3b82f6', '#8b5cf6'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            cutout: '68%',
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+</script>

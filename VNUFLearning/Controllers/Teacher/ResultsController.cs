@@ -15,6 +15,27 @@ namespace VNUFLearning.Controllers.Teacher
         {
             _context = context;
         }
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Detail(int id)
+        {
+            var teacherId = GetTeacherId();
+            if (teacherId == null) return Redirect("/Account/Login");
+
+            var result = await _context.ExamResults
+                .Include(r => r.User)
+                .Include(r => r.Subject)
+                .Include(r => r.Exam)
+                .Include(r => r.ExamDetails)
+                    .ThenInclude(d => d.Question)
+                .FirstOrDefaultAsync(r =>
+                    r.ExamResultId == id &&
+                    r.Exam != null &&
+                    r.Exam.TeacherId == teacherId.Value);
+
+            if (result == null) return NotFound();
+
+            return View("~/Views/Teacher/Results/Detail.cshtml", result);
+        }
 
         [HttpGet]
         [Route("~/Teacher/Results")]

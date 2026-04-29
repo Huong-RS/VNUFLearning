@@ -28,6 +28,7 @@
 	<ItemGroup>
 	  <Folder Include="Views\Admin\Blog\" />
 	  <Folder Include="wwwroot\uploads\documents\" />
+	  <Folder Include="wwwroot\uploads\blogs\" />
 	</ItemGroup>
 
 	<ItemGroup>
