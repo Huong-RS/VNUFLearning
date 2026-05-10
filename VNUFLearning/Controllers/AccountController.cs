@@ -1,19 +1,26 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using VNUFLearning.Data;
+using VNUFLearning.Models;
+using VNUFLearning.Models.ViewModels;
+using VNUFLearning.Services;
 
 namespace VNUFLearning.Controllers
 {
     public class AccountController : Controller
     {
         private readonly VnufLearningContext _context;
+        private readonly JwtTokenService _jwt;
 
-        public AccountController(VnufLearningContext context)
+        public AccountController(VnufLearningContext context, JwtTokenService jwt)
         {
             _context = context;
+            _jwt = jwt;
         }
 
         [HttpGet]
@@ -39,80 +46,139 @@ namespace VNUFLearning.Controllers
                 return RedirectToAction("Login");
             }
 
-            try
+            var user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.StudentCode == username);
+
+            if (user == null)
             {
-                var user = await _context.Users
-     .AsNoTracking()
-     .Where(u => u.StudentCode != null && u.StudentCode.Trim() == username)
-     .Select(u => new
-     {
-         u.UserId,
-         u.StudentCode,
-         u.PasswordHash,
-         u.FullName,
-         u.IsActive,
-         RoleName = u.Role.RoleName
-     })
-     .FirstOrDefaultAsync();
-
-                if (user == null)
-                {
-                    TempData["ErrorMessage"] = "Tài khoản không tồn tại.";
-                    return RedirectToAction("Login");
-                }
-                if (!user.IsActive)
-                {
-                    TempData["ErrorMessage"] = "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.";
-                    return RedirectToAction("Login");
-                }
-
-                var dbPassword = (user.PasswordHash ?? string.Empty).Trim();
-
-                // Sau khi ổn sẽ đổi sang BCrypt.
-                if (dbPassword != password)
-                {
-                    TempData["ErrorMessage"] = "Mật khẩu không chính xác.";
-                    return RedirectToAction("Login");
-                }
-
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, user.StudentCode ?? username),
-                    new Claim("FullName", string.IsNullOrWhiteSpace(user.FullName) ? user.StudentCode ?? username : user.FullName),
-                    new Claim(ClaimTypes.Role, user.RoleName ?? ""),
-                    new Claim("UserId", user.UserId.ToString())
-                };
-
-                var claimsIdentity = new ClaimsIdentity(
-                    claims,
-                    CookieAuthenticationDefaults.AuthenticationScheme
-                );
-
-                var authProperties = new AuthenticationProperties
-                {
-                    IsPersistent = true,
-                    ExpiresUtc = DateTime.UtcNow.AddMinutes(30)
-                };
-
-                await HttpContext.SignInAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme,
-                    new ClaimsPrincipal(claimsIdentity),
-                    authProperties
-                );
-
-                return RedirectToDashboard(user.RoleName);
+                ViewBag.Error = "Tài khoản hoặc mật khẩu không chính xác.";
+                return View();
             }
-            catch (Exception)
+
+            var (matched, needsRehash) = PasswordHasher.Verify(password, user.PasswordHash);
+            if (!matched)
             {
-                TempData["ErrorMessage"] = "Không thể kết nối cơ sở dữ liệu. Vui lòng thử lại sau.";
-                return RedirectToAction("Login");
+                ViewBag.Error = "Tài khoản hoặc mật khẩu không chính xác.";
+                return View();
             }
+
+            // Auto-migrate: nếu mật khẩu cũ là plain-text, hash lại bằng BCrypt
+            if (needsRehash)
+            {
+                user.PasswordHash = PasswordHasher.Hash(password);
+                await _context.SaveChangesAsync();
+            }
+
+            // =========================
+            // TẠO CLAIMS
+            // =========================
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.StudentCode),
+                new Claim("FullName", user.FullName),
+                new Claim(ClaimTypes.Role, user.Role.RoleName),
+                new Claim("UserId", user.UserId.ToString())
+            };
+
+            var claimsIdentity = new ClaimsIdentity(
+                claims,
+                CookieAuthenticationDefaults.AuthenticationScheme
+            );
+
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = true,
+                ExpiresUtc = DateTime.UtcNow.AddMinutes(30)
+            };
+
+            // =========================
+            // SIGN IN
+            // =========================
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                authProperties
+            );
+
+            // Phát hành JWT vào cookie để Gateway có thể validate khi đứng trước
+            var (jwtToken, expiresAt) = _jwt.CreateToken(user);
+            Response.Cookies.Append("access_token", jwtToken, new CookieOptions
+            {
+                HttpOnly = true,
+                SameSite = SameSiteMode.Lax,
+                Expires = expiresAt,
+                Secure = Request.IsHttps
+            });
+
+            // Chuyển trang theo Role
+            return RedirectToDashboard(user.Role.RoleName);
         }
 
+        // =========================
+        // ĐỔI MẬT KHẨU - GET
+        // =========================
+        [HttpGet]
+        [Authorize]
+        public IActionResult ChangePassword() => View(new ChangePasswordViewModel());
+
+        // =========================
+        // ĐỔI MẬT KHẨU - POST
+        // =========================
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var userIdStr = User.FindFirstValue("UserId");
+            if (!int.TryParse(userIdStr, out var userId))
+            {
+                ModelState.AddModelError(string.Empty, "Phiên đăng nhập không hợp lệ.");
+                return View(model);
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "Không tìm thấy tài khoản.");
+                return View(model);
+            }
+
+            var (matched, _) = PasswordHasher.Verify(model.CurrentPassword, user.PasswordHash);
+            if (!matched)
+            {
+                ModelState.AddModelError(nameof(model.CurrentPassword), "Mật khẩu hiện tại không đúng.");
+                return View(model);
+            }
+
+            if (string.Equals(model.CurrentPassword, model.NewPassword, StringComparison.Ordinal))
+            {
+                ModelState.AddModelError(nameof(model.NewPassword), "Mật khẩu mới phải khác mật khẩu hiện tại.");
+                return View(model);
+            }
+
+            user.PasswordHash = PasswordHasher.Hash(model.NewPassword);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.";
+
+            // Buộc đăng nhập lại để invalidate session cũ
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            Response.Cookies.Delete("access_token");
+            return RedirectToAction(nameof(Login));
+        }
+
+        // =========================
+        // LOGOUT
+        // =========================
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme);
+
+            Response.Cookies.Delete("access_token");
 
             return RedirectToAction("Login", "Account");
         }

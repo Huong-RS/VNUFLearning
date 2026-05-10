@@ -7,7 +7,13 @@ public partial class BlogPost
 {
     public int PostId { get; set; }
     public string? AttachmentUrl { get; set; }
-   
+    public string? ImageObjectName { get; set; }
+    public bool IsEdited { get; set; }
+
+    public DateTime? LastEditedAt { get; set; }
+
+    public virtual ICollection<BlogPostEditHistory> EditHistories { get; set; } = new List<BlogPostEditHistory>();
+    public string? AttachmentObjectName { get; set; }
     public string? AttachmentName { get; set; }
 
     public string? AttachmentType { get; set; }

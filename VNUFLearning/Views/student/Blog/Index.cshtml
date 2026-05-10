@@ -97,57 +97,106 @@
 
                     <div>
                         <h4>@item.Author.FullName</h4>
-                        <p>@item.CreatedAt?.ToString("dd/MM/yyyy HH:mm") · <i class="fa fa-earth-asia"></i></p>
+                        <p>@item.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</p>
                     </div>
-                    @if (item.AuthorId == currentStudentId)
+                </div>
+                <div class="post-header-actions ms-auto">
+                    @if (item.AuthorId == ViewBag.CurrentStudentId)
                     {
+                        <button type="button"
+                                class="edit-icon-btn"
+                                onclick="openEditPost(@item.PostId)"
+                                title="Sửa bài viết">
+                            <i class="fa fa-pen"></i>
+                        </button>
+
                         <form method="post"
                               action="/Student/Blog/Delete/@item.PostId"
-                              onsubmit="return confirm('Xóa bài viết này?');"
-                              class="ms-auto">
+                              onsubmit="return confirm('Xóa bài viết này?');">
                             @Html.AntiForgeryToken()
 
-                            <button type="submit" class="delete-btn">
+                            <button type="submit" class="delete-btn" title="Xóa bài viết">
                                 <i class="fa fa-trash"></i>
                             </button>
                         </form>
                     }
                 </div>
 
-                <h3 class="post-title">@item.Title</h3>
-                <p class="post-content">@item.Content</p>
-
-                @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                <h3 class="post-title" id="post-title-@item.PostId">@item.Title</h3>
+                <p class="post-content" id="post-content-@item.PostId">@item.Content</p>
+                @if (item.AuthorId == ViewBag.CurrentStudentId)
                 {
-                    if (item.ImageUrl.EndsWith(".mp4"))
-                    {
-                        <video src="@item.ImageUrl" class="post-image" controls></video>
-                    }
-                    else
-                    {
-                        <img src="@item.ImageUrl" class="post-image" />
-                    }
+                    <div class="edit-post-box" id="edit-post-@item.PostId">
+                        <input id="edit-title-@item.PostId"
+                               value="@item.Title"
+                               class="edit-input" />
+
+                        <textarea id="edit-content-@item.PostId"
+                                  class="edit-textarea">@item.Content</textarea>
+
+                        <label class="edit-check">
+                            <input type="checkbox" id="remove-image-@item.PostId" />
+                            Xóa ảnh/video hiện tại
+                        </label>
+
+                        <input type="file"
+                               id="edit-image-@item.PostId"
+                               accept="image/*,video/mp4"
+                               class="edit-input" />
+
+                        <label class="edit-check">
+                            <input type="checkbox" id="remove-attachment-@item.PostId" />
+                            Xóa file đính kèm hiện tại
+                        </label>
+
+                        <input type="file"
+                               id="edit-attachment-@item.PostId"
+                               accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar"
+                               class="edit-input" />
+
+                        <div class="edit-actions">
+                            <button type="button" onclick="submitEditPost(@item.PostId)">Lưu thay đổi</button>
+                            <button type="button" onclick="closeEditPost(@item.PostId)">Hủy</button>
+                        </div>
+                    </div>
                 }
 
-                @if (!string.IsNullOrWhiteSpace(item.AttachmentUrl))
-                {
-                    <a href="/Student/Blog/Download/@item.PostId" class="attachment-box">
-                        <div class="file-icon">
-                            <i class="fa fa-file"></i>
-                        </div>
 
-                        <div>
-                            <div class="fw-bold">@item.AttachmentName</div>
-                            <div class="text-muted small">
-                                @item.AttachmentType
-                                @if (item.AttachmentSize.HasValue)
-                                {
-                                    <span> · @((item.AttachmentSize.Value / 1024.0 / 1024.0).ToString("0.##")) MB</span>
-                                }
+                <div id="post-image-wrap-@item.PostId">
+                    @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                    {
+                        if (item.ImageUrl.EndsWith(".mp4"))
+                        {
+                            <video src="@item.ImageUrl" class="post-image" controls></video>
+                        }
+                        else
+                        {
+                            <img src="@item.ImageUrl" class="post-image" />
+                        }
+                    }
+                </div>
+                <div id="post-attachment-wrap-@item.PostId">
+                    @if (!string.IsNullOrWhiteSpace(item.AttachmentUrl))
+                    {
+                        <a href="/Student/Blog/Download/@item.PostId" class="attachment-box">
+                            <div class="file-icon">
+                                <i class="fa fa-file"></i>
                             </div>
-                        </div>
-                    </a>
-                }
+
+                            <div>
+                                <div class="fw-bold">@item.AttachmentName</div>
+                                <div class="text-muted small">
+                                    @item.AttachmentType
+                                    @if (item.AttachmentSize.HasValue)
+                                    {
+                                        <span> · @((item.AttachmentSize.Value / 1024.0 / 1024.0).ToString("0.##")) MB</span>
+                                    }
+                                </div>
+                            </div>
+                        </a>
+                    }
+                </div>
+                  
 
                 <div class="post-meta">
                     <span>
@@ -188,8 +237,7 @@
                                 <div class="comment-right">
                                     <div class="comment-bubble">
                                         <div class="comment-name">@c.User.FullName</div>
-                                        <div>@c.Content</div>
-                                        @if (!string.IsNullOrWhiteSpace(c.ImageUrl))
+                                        <div id="comment-content-@c.CommentId">@c.Content</div>                                        @if (!string.IsNullOrWhiteSpace(c.ImageUrl))
                                         {
                                             if (c.ImageUrl.EndsWith(".mp4"))
                                             {
@@ -214,14 +262,32 @@
                                         }
                                     </div>
 
-                                    <div class="comment-tools">
-                                        <button type="button" onclick="toggleReply(@c.CommentId)">Phản hồi</button>
-                                        <span>@c.CreatedAt?.ToString("HH:mm dd/MM")</span>
-                                        @if (c.UserId == currentStudentId)
-                                        {
-                                            <button type="button" onclick="deleteComment(@c.CommentId)">Xóa</button>
-                                        }
-                                    </div>
+                                  <div class="comment-tools">
+    <button type="button" onclick="toggleReply(@c.CommentId)">Phản hồi</button>
+
+    @if (c.UserId == ViewBag.CurrentStudentId)
+    {
+        <button type="button" onclick="openEditComment(@c.CommentId)">Sửa</button>
+        <button type="button" onclick="deleteComment(@c.CommentId)">Xóa</button>
+    }
+
+    <span>@c.CreatedAt?.ToString("HH:mm dd/MM")</span>
+</div>
+
+@if (c.UserId == ViewBag.CurrentStudentId)
+{
+    <div class="edit-comment-box" id="edit-comment-@c.CommentId">
+        <input id="edit-comment-input-@c.CommentId"
+               value="@c.Content"
+               class="edit-input"
+               placeholder="Sửa nội dung bình luận..." />
+
+        <div class="edit-actions">
+            <button type="button" onclick="submitEditComment(@c.CommentId)">Lưu</button>
+            <button type="button" onclick="closeEditComment(@c.CommentId)">Hủy</button>
+        </div>
+    </div>
+}
 
                                     <form id="reply-@c.CommentId"
                                           class="reply-form"
@@ -259,11 +325,31 @@
                                                 <div class="comment-avatar small">
                                                     @r.User.FullName.Substring(0, 1).ToUpper()
                                                 </div>
+                                                <div class="comment-tools">
+                                                    @if (r.UserId == ViewBag.CurrentStudentId)
+                                                    {
+                                                        <button type="button" onclick="openEditComment(@r.CommentId)">Sửa</button>
+                                                        <button type="button" onclick="deleteComment(@r.CommentId)">Xóa</button>
+                                                    }
+                                                </div>
 
+                                                @if (r.UserId == ViewBag.CurrentStudentId)
+                                                {
+                                                    <div class="edit-comment-box" id="edit-comment-@r.CommentId">
+                                                        <input id="edit-comment-input-@r.CommentId"
+                                                               value="@r.Content"
+                                                               class="edit-input"
+                                                               placeholder="Sửa nội dung phản hồi..." />
+
+                                                        <div class="edit-actions">
+                                                            <button type="button" onclick="submitEditComment(@r.CommentId)">Lưu</button>
+                                                            <button type="button" onclick="closeEditComment(@r.CommentId)">Hủy</button>
+                                                        </div>
+                                                    </div>
+                                                }
                                                 <div class="comment-bubble">
                                                     <div class="comment-name">@r.User.FullName</div>
-                                                    <div>@r.Content</div>
-                                                    @if (!string.IsNullOrWhiteSpace(r.ImageUrl))
+                                                    <div id="comment-content-@r.CommentId">@r.Content</div>                                                    @if (!string.IsNullOrWhiteSpace(r.ImageUrl))
                                                     {
                                                         if (r.ImageUrl.EndsWith(".mp4"))
                                                         {
@@ -359,6 +445,86 @@
 </div>
 
 <style>
+
+    .post-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .post-header-actions form {
+            margin: 0;
+        }
+
+    .edit-icon-btn {
+        border: none;
+        background: #ecfdf5;
+        color: #059669;
+        border-radius: 10px;
+        width: 38px;
+        height: 38px;
+    }
+
+    .delete-btn {
+        border: none;
+        background: #fff1f2;
+        color: #e11d48;
+        border-radius: 10px;
+        width: 38px;
+        height: 38px;
+    }
+
+    .edit-post-box,
+    .edit-comment-box {
+        display: none;
+        margin-top: 10px;
+        padding: 12px;
+        background: #f8fafc;
+        border: 1px solid #dbe3ef;
+        border-radius: 14px;
+        gap: 8px;
+    }
+
+        .edit-post-box.show,
+        .edit-comment-box.show {
+            display: grid;
+        }
+
+    .edit-input,
+    .edit-textarea {
+        width: 100%;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 10px 12px;
+        outline: none;
+    }
+
+    .edit-textarea {
+        min-height: 90px;
+    }
+
+    .edit-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+        .edit-actions button {
+            border: none;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-weight: 800;
+        }
+
+            .edit-actions button:first-child {
+                background: #059669;
+                color: white;
+            }
+
+            .edit-actions button:last-child {
+                background: #e5e7eb;
+                color: #334155;
+            }
     .student-blog-page {
         max-width: 1080px;
         margin: 0 auto;
@@ -795,11 +961,25 @@
         font-weight: 700;
     }
 </style>
-
 <script>
+    const blogConnection = new signalR.HubConnectionBuilder()
+        .withUrl("/blogHub")
+        .withAutomaticReconnect()
+        .build();
+
+    blogConnection.start()
+        .then(() => console.log("BlogHub connected"))
+        .catch(err => console.error(err));
+
     function getToken() {
         const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
         return tokenInput ? tokenInput.value : "";
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.innerText = text || "";
+        return div.innerHTML;
     }
 
     function toggleComment(id) {
@@ -822,6 +1002,22 @@
         form.classList.toggle("show");
     }
 
+    function openEditPost(id) {
+        document.getElementById(`edit-post-${id}`)?.classList.add("show");
+    }
+
+    function closeEditPost(id) {
+        document.getElementById(`edit-post-${id}`)?.classList.remove("show");
+    }
+
+    function openEditComment(id) {
+        document.getElementById(`edit-comment-${id}`)?.classList.add("show");
+    }
+
+    function closeEditComment(id) {
+        document.getElementById(`edit-comment-${id}`)?.classList.remove("show");
+    }
+
     async function toggleLikeAjax(postId) {
         const response = await fetch(`/Student/Blog/ToggleLikeAjax/${postId}`, {
             method: "POST",
@@ -836,11 +1032,10 @@
             document.getElementById(`like-count-${postId}`).innerText = data.count;
 
             const btn = document.querySelector(`.like-btn[data-post-id="${postId}"]`);
-            if (btn) {
-                btn.classList.toggle("liked", data.liked);
-            }
+            if (btn) btn.classList.toggle("liked", data.liked);
         }
     }
+
     async function deleteComment(commentId) {
         if (!confirm("Xóa bình luận này?")) return;
 
@@ -856,7 +1051,48 @@
         if (data.success) {
             const el = document.getElementById(`comment-item-${commentId}`);
             if (el) el.remove();
+        } else {
+            alert(data.message || "Không xóa được bình luận.");
         }
+    }
+
+    function renderCommentFiles(data) {
+        let html = "";
+
+        if (data.imageUrl) {
+            if (data.imageUrl.toLowerCase().endsWith(".mp4")) {
+                html += `<video src="${data.imageUrl}" class="comment-media" controls></video>`;
+            } else {
+                html += `<img src="${data.imageUrl}" class="comment-media" />`;
+            }
+        }
+
+        if (data.attachmentUrl) {
+            const id = data.commentId || data.parentId;
+
+            html += `
+                    <a href="/Student/Blog/DownloadCommentFile/${id}" class="comment-attachment">
+                        <i class="fa fa-file"></i>
+                        <span>${escapeHtml(data.attachmentName || "Tệp đính kèm")}</span>
+                    </a>`;
+        }
+
+        return html;
+    }
+
+    function renderEditCommentBox(id, content, placeholder) {
+        return `
+                <div class="edit-comment-box" id="edit-comment-${id}">
+                    <input id="edit-comment-input-${id}"
+                           value="${escapeHtml(content || "")}"
+                           class="edit-input"
+                           placeholder="${placeholder}" />
+
+                    <div class="edit-actions">
+                        <button type="button" onclick="submitEditComment(${id})">Lưu</button>
+                        <button type="button" onclick="closeEditComment(${id})">Hủy</button>
+                    </div>
+                </div>`;
     }
 
     async function submitCommentAjax(event, postId) {
@@ -888,43 +1124,47 @@
             list.insertAdjacentHTML("beforeend", `
                     <div class="comment-item" id="comment-item-${data.commentId}">
                         <div class="comment-avatar">${data.avatar}</div>
+
                         <div class="comment-right">
                             <div class="comment-bubble">
                                 <div class="comment-name">${escapeHtml(data.userName)}</div>
-    <div>${escapeHtml(data.content || "")}</div>
-    ${renderCommentFiles(data)}
-    </div>
-
-                            <div class="comment-tools">
-                                <button onclick="toggleReply(${data.commentId})" type="button">Phản hồi</button>
-                                <span>${data.createdAt}</span>
+                                <div id="comment-content-${data.commentId}">${escapeHtml(data.content || "")}</div>
+                                ${renderCommentFiles(data)}
                             </div>
 
-                             <form id="reply-${data.commentId}"
-          class="reply-form"
-          enctype="multipart/form-data"
-          onsubmit="return submitReplyAjax(event, ${data.commentId})">
-        <input name="content" placeholder="Viết phản hồi..." />
+                            <div class="comment-tools">
+                                <button type="button" onclick="toggleReply(${data.commentId})">Phản hồi</button>
+                                <button type="button" onclick="openEditComment(${data.commentId})">Sửa</button>
+                                <button type="button" onclick="deleteComment(${data.commentId})">Xóa</button>
+                                <span>${data.createdAt || ""}</span>
+                            </div>
 
-        <label class="comment-file-btn">
-            <i class="fa fa-image"></i>
-            <input type="file" name="imageFile" accept="image/*,video/mp4" hidden />
-        </label>
+                            ${renderEditCommentBox(data.commentId, data.content, "Sửa nội dung bình luận...")}
 
-        <label class="comment-file-btn">
-            <i class="fa fa-paperclip"></i>
-            <input type="file" name="attachmentFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar" hidden />
-        </label>
+                            <form id="reply-${data.commentId}"
+                                  class="reply-form"
+                                  enctype="multipart/form-data"
+                                  onsubmit="return submitReplyAjax(event, ${data.commentId})">
+                                <input name="content" placeholder="Viết phản hồi..." />
 
-        <button type="submit"><i class="fa fa-paper-plane"></i></button>
-    </form>
+                                <label class="comment-file-btn">
+                                    <i class="fa fa-image"></i>
+                                    <input type="file" name="imageFile" accept="image/*,video/mp4" hidden />
+                                </label>
+
+                                <label class="comment-file-btn">
+                                    <i class="fa fa-paperclip"></i>
+                                    <input type="file" name="attachmentFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar" hidden />
+                                </label>
+
+                                <button type="submit"><i class="fa fa-paper-plane"></i></button>
+                            </form>
 
                             <div id="reply-list-${data.commentId}"></div>
                         </div>
                     </div>
                 `);
 
-            input.value = "";
             form.reset();
 
             const countEl = document.getElementById(`comment-count-${postId}`);
@@ -961,17 +1201,26 @@
             const list = document.getElementById(`reply-list-${commentId}`);
 
             list.insertAdjacentHTML("beforeend", `
-                    <div class="reply-item">
+                    <div class="reply-item" id="comment-item-${data.commentId}">
                         <div class="comment-avatar small">${data.avatar}</div>
-                        <div class="comment-bubble">
-                            <div class="comment-name">${escapeHtml(data.userName)}</div>
-    <div>${escapeHtml(data.content || "")}</div>
-    ${renderCommentFiles(data)}
-    </div>
+
+                        <div>
+                            <div class="comment-bubble">
+                                <div class="comment-name">${escapeHtml(data.userName)}</div>
+                                <div id="comment-content-${data.commentId}">${escapeHtml(data.content || "")}</div>
+                                ${renderCommentFiles(data)}
+                            </div>
+
+                            <div class="comment-tools">
+                                <button type="button" onclick="openEditComment(${data.commentId})">Sửa</button>
+                                <button type="button" onclick="deleteComment(${data.commentId})">Xóa</button>
+                            </div>
+
+                            ${renderEditCommentBox(data.commentId, data.content, "Sửa nội dung phản hồi...")}
+                        </div>
                     </div>
                 `);
 
-            input.value = "";
             form.reset();
             form.classList.remove("show");
         }
@@ -979,36 +1228,104 @@
         return false;
     }
 
-    function escapeHtml(text) {
-        const div = document.createElement("div");
-        div.innerText = text;
-        return div.innerHTML;
-    }
-    function renderCommentFiles(data) {
-        let html = "";
+    async function submitEditComment(id) {
+        const input = document.getElementById(`edit-comment-input-${id}`);
+        if (!input) return;
 
-        if (data.imageUrl) {
-            if (data.imageUrl.toLowerCase().endsWith(".mp4")) {
-                html += `<video src="${data.imageUrl}" class="comment-media" controls></video>`;
+        const content = input.value.trim();
+
+        const body = new FormData();
+        body.append("content", content);
+
+        const response = await fetch(`/Student/Blog/EditComment/${id}`, {
+            method: "POST",
+            headers: {
+                "RequestVerificationToken": getToken()
+            },
+            body
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            alert(data.message || "Không thể sửa bình luận.");
+            return;
+        }
+
+        document.getElementById(`comment-content-${id}`).innerText = data.content;
+
+        closeEditComment(id);
+        alert("Đã cập nhật bình luận.");
+    }
+
+    async function submitEditPost(id) {
+        const title = document.getElementById(`edit-title-${id}`).value.trim();
+        const content = document.getElementById(`edit-content-${id}`).value.trim();
+
+        const imageInput = document.getElementById(`edit-image-${id}`);
+        const attachmentInput = document.getElementById(`edit-attachment-${id}`);
+
+        const body = new FormData();
+        body.append("title", title);
+        body.append("content", content);
+        body.append("removeImage", document.getElementById(`remove-image-${id}`).checked);
+        body.append("removeAttachment", document.getElementById(`remove-attachment-${id}`).checked);
+
+        if (imageInput.files.length > 0) body.append("imageFile", imageInput.files[0]);
+        if (attachmentInput.files.length > 0) body.append("attachmentFile", attachmentInput.files[0]);
+
+        const response = await fetch(`/Student/Blog/EditPost/${id}`, {
+            method: "POST",
+            headers: {
+                "RequestVerificationToken": getToken()
+            },
+            body
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            alert(data.message || "Không thể sửa bài viết.");
+            return;
+        }
+
+        document.getElementById(`post-title-${id}`).innerText = data.title;
+        document.getElementById(`post-content-${id}`).innerText = data.content;
+
+        const imageWrap = document.getElementById(`post-image-wrap-${id}`);
+        if (imageWrap) {
+            if (data.imageUrl) {
+                const lower = data.imageUrl.toLowerCase();
+                imageWrap.innerHTML = lower.endsWith(".mp4")
+                    ? `<video src="${data.imageUrl}" class="post-image" controls></video>`
+                    : `<img src="${data.imageUrl}" class="post-image" />`;
             } else {
-                html += `<img src="${data.imageUrl}" class="comment-media" />`;
+                imageWrap.innerHTML = "";
             }
         }
 
-        if (data.attachmentUrl) {
-            const prefix = location.pathname.toLowerCase().startsWith("/student")
-                ? "/Student/Blog/DownloadCommentFile/"
-                : "/Teacher/Blog/DownloadCommentFile/";
-
-            const id = data.commentId || data.parentId;
-
-            html += `
-                <a href="${prefix}${id}" class="comment-attachment">
-                    <i class="fa fa-file"></i>
-                    <span>${escapeHtml(data.attachmentName || "Tệp đính kèm")}</span>
-                </a>`;
+        const attachmentWrap = document.getElementById(`post-attachment-wrap-${id}`);
+        if (attachmentWrap) {
+            if (data.attachmentUrl) {
+                attachmentWrap.innerHTML = `
+                        <a href="/Student/Blog/Download/${id}" class="attachment-box">
+                            <div class="file-icon"><i class="fa fa-file"></i></div>
+                            <div>
+                                <div class="fw-bold">${escapeHtml(data.attachmentName || "Tệp đính kèm")}</div>
+                                <div class="text-muted small">${escapeHtml(data.attachmentType || "")} · ${escapeHtml(data.attachmentSize || "")}</div>
+                            </div>
+                        </a>`;
+            } else {
+                attachmentWrap.innerHTML = "";
+            }
         }
 
-        return html;
+        document.getElementById(`remove-image-${id}`).checked = false;
+        document.getElementById(`remove-attachment-${id}`).checked = false;
+        imageInput.value = "";
+        attachmentInput.value = "";
+
+        closeEditPost(id);
+        alert("Đã cập nhật bài viết.");
     }
 </script>

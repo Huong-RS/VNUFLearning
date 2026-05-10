@@ -15,6 +15,9 @@ public partial class VnufLearningContext : DbContext
         : base(options)
     {
     }
+    public virtual DbSet<BlogPostEditHistory> BlogPostEditHistories { get; set; }
+
+    public virtual DbSet<CommentEditHistory> CommentEditHistories { get; set; }
     public virtual DbSet<BlogPost> BlogPosts { get; set; }
     public virtual DbSet<BlogLike> BlogLikes { get; set; }
     public virtual DbSet<Comment> Comments { get; set; }
@@ -36,6 +39,42 @@ public partial class VnufLearningContext : DbContext
    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<BlogPostEditHistory>(entity =>
+        {
+            entity.HasKey(e => e.HistoryId);
+
+            entity.Property(e => e.OldTitle).HasMaxLength(255);
+            entity.Property(e => e.OldImageUrl).HasMaxLength(500);
+            entity.Property(e => e.OldAttachmentUrl).HasMaxLength(500);
+
+            entity.HasOne(e => e.Post)
+                .WithMany(p => p.EditHistories)
+                .HasForeignKey(e => e.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.EditedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.EditedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CommentEditHistory>(entity =>
+        {
+            entity.HasKey(e => e.HistoryId);
+
+            entity.Property(e => e.OldImageUrl).HasMaxLength(500);
+            entity.Property(e => e.OldAttachmentUrl).HasMaxLength(500);
+
+            entity.HasOne(e => e.Comment)
+                .WithMany(c => c.EditHistories)
+                .HasForeignKey(e => e.CommentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.EditedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.EditedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
         modelBuilder.Entity<Exam>(entity =>
         {
             entity.Property(e => e.ExamType).HasDefaultValue(1);
@@ -155,6 +194,10 @@ public partial class VnufLearningContext : DbContext
         });
     modelBuilder.Entity<Comment>(entity =>
         {
+            entity.HasOne(d => d.ParentComment)
+    .WithMany(p => p.Replies)
+    .HasForeignKey(d => d.ParentCommentId)
+    .OnDelete(DeleteBehavior.Restrict);
             entity.HasKey(e => e.CommentId).HasName("PK__Comments__C3B4DFCADF1E1B0A");
 
             entity.Property(e => e.Content).HasMaxLength(1000);

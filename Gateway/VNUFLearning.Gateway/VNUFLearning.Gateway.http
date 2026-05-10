@@ -1,0 +1,19 @@
+@gateway = http://localhost:7000
+
+### Healthcheck (public)
+GET {{gateway}}/Home/Index
+
+### Login (public)
+GET {{gateway}}/Account/Login
+
+### Admin (protected, cần Bearer token)
+GET {{gateway}}/Admin/Dashboard
+Authorization: Bearer {{accessToken}}
+
+### Teacher (protected)
+GET {{gateway}}/Teacher/Dashboard
+Authorization: Bearer {{accessToken}}
+
+### Student (protected)
+GET {{gateway}}/Student/Dashboard
+Authorization: Bearer {{accessToken}}
