@@ -1,0 +1,435 @@
+@model VNUFLearning.Models.ViewModels.UserProfileViewModel
+@using System.Globalization
+@{
+    Layout = Model.Role switch
+    {
+        "Admin" => "~/Views/Shared/_LayoutAdmin.cshtml",
+        "GiangVien" => "~/Views/Shared/_LayoutTeacher.cshtml",
+        _ => "~/Views/Shared/_LayoutStudent.cshtml"
+    };
+
+    ViewData["Title"] = "Hồ sơ cá nhân";
+    var initials = string.Join("", Model.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).TakeLast(2).Select(x => x[0])).ToUpper();
+    var roleDisplayName = Model.Role switch
+    {
+        "Admin" => "Quản trị viên",
+        "GiangVien" => "Giảng viên",
+        "SinhVien" => "Sinh viên",
+        _ => Model.Role
+    };
+}
+
+<style>
+    .profile-page {
+        max-width: 1080px;
+        margin: 0 auto;
+        color: #111827;
+    }
+
+    .profile-header,
+    .profile-panel {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        box-shadow: 0 8px 22px rgba(15, 23, 42, .06);
+    }
+
+    .profile-header {
+        padding: clamp(20px, 4vw, 34px);
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        margin-bottom: 18px;
+    }
+
+    .avatar-wrap {
+        position: relative;
+        width: clamp(104px, 18vw, 148px);
+        height: clamp(104px, 18vw, 148px);
+        flex: 0 0 auto;
+    }
+
+    .profile-avatar,
+    .avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 5px solid #fff;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, .16);
+    }
+
+    .profile-avatar {
+        object-fit: cover;
+        display: block;
+        background: #f3f4f6;
+    }
+
+    .avatar-placeholder {
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #15803d, #16a34a);
+        color: #fff;
+        font-size: clamp(32px, 6vw, 48px);
+        font-weight: 900;
+    }
+
+    .avatar-camera {
+        position: absolute;
+        right: 4px;
+        bottom: 6px;
+        width: 42px;
+        height: 42px;
+        border: 0;
+        border-radius: 50%;
+        background: #111827;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 6px 16px rgba(0,0,0,.2);
+    }
+
+    .profile-name {
+        font-size: clamp(26px, 4vw, 38px);
+        font-weight: 900;
+        margin: 0 0 8px;
+        line-height: 1.15;
+    }
+
+    .profile-role {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 8px 14px;
+        background: #eef2ff;
+        color: #3730a3;
+        font-weight: 800;
+        margin-bottom: 12px;
+    }
+
+    .profile-meta {
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .profile-actions {
+        margin-left: auto;
+    }
+
+    .profile-tabs {
+        display: flex;
+        gap: 10px;
+        padding: 10px;
+        margin-bottom: 18px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        overflow-x: auto;
+    }
+
+    .profile-tab {
+        border: 0;
+        border-radius: 12px;
+        background: transparent;
+        color: #4b5563;
+        font-weight: 800;
+        padding: 12px 18px;
+        white-space: nowrap;
+    }
+
+    .profile-tab.active {
+        background: #16a34a;
+        color: #fff;
+    }
+
+    .profile-panel {
+        padding: clamp(18px, 4vw, 30px);
+        display: none;
+    }
+
+    .profile-panel.active {
+        display: block;
+    }
+
+    .timeline {
+        position: relative;
+        display: grid;
+        gap: 16px;
+    }
+
+    .timeline-item {
+        display: grid;
+        grid-template-columns: 46px 1fr;
+        gap: 14px;
+    }
+
+    .timeline-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #ecfdf5;
+        color: #15803d;
+    }
+
+    .timeline-content {
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 16px 18px;
+        background: #f9fafb;
+    }
+
+    .timeline-title {
+        font-weight: 900;
+        margin-bottom: 6px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .info-item {
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 16px;
+        background: #f9fafb;
+    }
+
+    .info-label {
+        color: #6b7280;
+        font-size: .9rem;
+        font-weight: 800;
+        margin-bottom: 6px;
+    }
+
+    .info-value {
+        font-weight: 800;
+        overflow-wrap: anywhere;
+    }
+
+    .progress-placeholder {
+        min-height: 220px;
+        border: 2px dashed #cbd5e1;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        color: #64748b;
+        text-align: center;
+        background: #f8fafc;
+        font-weight: 800;
+    }
+
+    @@media (max-width: 575.98px) {
+        .profile-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .profile-actions {
+            width: 100%;
+            margin-left: 0;
+        }
+
+        .profile-actions .btn {
+            width: 100%;
+        }
+
+        .info-grid,
+        .timeline-item {
+            grid-template-columns: 1fr;
+        }
+
+        .timeline-icon {
+            display: none;
+        }
+    }
+</style>
+
+<div class="profile-page">
+    <form id="avatarTokenForm" class="d-none">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <section class="profile-header">
+        <div class="avatar-wrap">
+            @if (!string.IsNullOrWhiteSpace(Model.AvatarUrl))
+            {
+                <img id="profileAvatar" class="profile-avatar" src="@Model.AvatarUrl" alt="Ảnh đại diện của @Model.FullName" />
+                <div id="avatarInitials" class="avatar-placeholder d-none">@initials</div>
+            }
+            else
+            {
+                <img id="profileAvatar" class="profile-avatar d-none" src="" alt="Ảnh đại diện của @Model.FullName" />
+                <div id="avatarInitials" class="avatar-placeholder">@initials</div>
+            }
+
+            <button type="button" class="avatar-camera" id="avatarButton" aria-label="Cập nhật ảnh đại diện">
+                <i class="fa-solid fa-camera"></i>
+            </button>
+            <input type="file" id="avatarFile" accept="image/png,image/jpeg,image/webp" hidden />
+        </div>
+
+        <div>
+            <h1 class="profile-name">@Model.FullName</h1>
+            <div class="profile-role">
+                <i class="fa-solid fa-user-shield"></i>
+                @roleDisplayName
+            </div>
+            <p class="profile-meta">
+                Mã số: <strong>@Model.Code</strong>
+                @if (Model.JoinDate.HasValue)
+                {
+                    <span> · Tham gia @Model.JoinDate.Value.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)</span>
+                }
+            </p>
+            <div id="avatarMessage" class="small mt-2"></div>
+        </div>
+
+        <div class="profile-actions">
+            <button type="button" class="btn btn-success rounded-4 fw-bold px-4" data-profile-tab-target="intro">
+                <i class="fa-solid fa-pen me-1"></i>
+                Cập nhật hồ sơ
+            </button>
+        </div>
+    </section>
+
+    <nav class="profile-tabs" aria-label="Profile tabs">
+        <button type="button" class="profile-tab active" data-profile-tab="activities">Hoạt động</button>
+        <button type="button" class="profile-tab" data-profile-tab="intro">Giới thiệu</button>
+        <button type="button" class="profile-tab" data-profile-tab="progress">Tiến độ</button>
+    </nav>
+
+    <section id="activities" class="profile-panel active">
+        @if (Model.RecentActivities.Any())
+        {
+            <div class="timeline">
+                @foreach (var activity in Model.RecentActivities)
+                {
+                    <article class="timeline-item">
+                        <div class="timeline-icon">
+                            <i class="@activity.IconCssClass"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                <span class="badge @activity.BadgeCssClass">@activity.Type</span>
+                                @if (activity.CreatedAt.HasValue)
+                                {
+                                    <span class="text-muted small">@activity.CreatedAt.Value.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture)</span>
+                                }
+                            </div>
+                            <div class="timeline-title">@activity.Title</div>
+                            <div class="text-muted">@activity.Description</div>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="progress-placeholder">
+                Chưa có hoạt động gần đây.
+            </div>
+        }
+    </section>
+
+    <section id="intro" class="profile-panel">
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Giới thiệu</div>
+                <div class="info-value">@Model.Bio</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Email</div>
+                <div class="info-value">@(string.IsNullOrWhiteSpace(Model.Email) ? "Chưa cập nhật" : Model.Email)</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Mã số</div>
+                <div class="info-value">@Model.Code</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Vai trò</div>
+                <div class="info-value">@roleDisplayName</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="progress" class="profile-panel">
+        <div class="progress-placeholder">
+            Tiến độ học tập/giảng dạy
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const tabs = document.querySelectorAll("[data-profile-tab]");
+            const panels = document.querySelectorAll(".profile-panel");
+            const targetButtons = document.querySelectorAll("[data-profile-tab-target]");
+
+            function activateTab(tabName) {
+                tabs.forEach(tab => tab.classList.toggle("active", tab.dataset.profileTab === tabName));
+                panels.forEach(panel => panel.classList.toggle("active", panel.id === tabName));
+            }
+
+            tabs.forEach(tab => {
+                tab.addEventListener("click", () => activateTab(tab.dataset.profileTab));
+            });
+
+            targetButtons.forEach(button => {
+                button.addEventListener("click", () => activateTab(button.dataset.profileTabTarget));
+            });
+
+            const avatarButton = document.getElementById("avatarButton");
+            const avatarFile = document.getElementById("avatarFile");
+            const profileAvatar = document.getElementById("profileAvatar");
+            const avatarInitials = document.getElementById("avatarInitials");
+            const avatarMessage = document.getElementById("avatarMessage");
+            const token = document.querySelector("#avatarTokenForm input[name='__RequestVerificationToken']")?.value;
+
+            avatarButton?.addEventListener("click", () => avatarFile?.click());
+
+            avatarFile?.addEventListener("change", async () => {
+                const file = avatarFile.files?.[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append("avatarFile", file);
+
+                avatarButton.disabled = true;
+                avatarMessage.className = "small mt-2 text-muted";
+                avatarMessage.textContent = "Đang tải ảnh đại diện...";
+
+                try {
+                    const response = await fetch("/Profile/UpdateAvatar", {
+                        method: "POST",
+                        headers: {
+                            "RequestVerificationToken": token
+                        },
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.message || "Không thể cập nhật ảnh đại diện.");
+                    }
+
+                    profileAvatar.src = `${result.avatarUrl}?v=${Date.now()}`;
+                    profileAvatar.classList.remove("d-none");
+                    avatarInitials.classList.add("d-none");
+                    avatarMessage.className = "small mt-2 text-success";
+                    avatarMessage.textContent = result.message;
+                } catch (error) {
+                    avatarMessage.className = "small mt-2 text-danger";
+                    avatarMessage.textContent = error.message;
+                } finally {
+                    avatarButton.disabled = false;
+                    avatarFile.value = "";
+                }
+            });
+        })();
+    </script>
+}
