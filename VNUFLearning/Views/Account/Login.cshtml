@@ -118,6 +118,26 @@
                 background: #177847;
             }
 
+        .login-alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            border: 1px solid rgba(220, 53, 69, .2);
+            border-left: 5px solid #dc3545;
+            border-radius: 14px;
+            background: #fff5f5;
+            color: #842029;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+            font-size: .94rem;
+            line-height: 1.45;
+        }
+
+        .login-alert i {
+            margin-top: 2px;
+            color: #dc3545;
+        }
+
         .toast-wrap {
             position: fixed;
             top: 22px;
@@ -232,6 +252,17 @@
             </div>
 
             <div class="login-body">
+                @if (!string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    <div class="login-alert" role="alert">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <div>
+                            <div class="fw-bold">Không thể đăng nhập</div>
+                            <div>@errorMessage</div>
+                        </div>
+                    </div>
+                }
+
                 <form method="post" action="/Account/Login" autocomplete="off">
                     <div class="mb-3">
                         <label class="form-label">Tài khoản</label>

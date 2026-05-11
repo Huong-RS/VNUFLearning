@@ -19,7 +19,11 @@ namespace VNUFLearning.Models.ViewModels
 
         public string Code { get; set; } = string.Empty;
 
+        public string? Phone { get; set; }
+
         public string? Bio { get; set; }
+
+        public string? DepartmentName { get; set; }
 
         public List<UserProfileActivityViewModel> RecentActivities { get; set; } = new();
     }

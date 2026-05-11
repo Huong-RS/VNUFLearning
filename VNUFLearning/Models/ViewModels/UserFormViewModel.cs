@@ -21,6 +21,11 @@ namespace VNUFLearning.Models.ViewModels
         [Display(Name = "Email")]
         public string? Email { get; set; }
 
+        [Phone(ErrorMessage = "Số điện thoại không hợp lệ.")]
+        [MaxLength(20, ErrorMessage = "Số điện thoại không được vượt quá 20 ký tự.")]
+        [Display(Name = "Số điện thoại")]
+        public string? Phone { get; set; }
+
         [Required(ErrorMessage = "Vui lòng chọn vai trò.")]
         [Display(Name = "Vai trò")]
         public int RoleId { get; set; }

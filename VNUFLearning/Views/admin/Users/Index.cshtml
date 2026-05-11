@@ -183,7 +183,7 @@
                                    name="keyword"
                                    value="@currentKeyword"
                                    class="form-control border-start-0 rounded-end-pill"
-                                   placeholder="Tìm theo tên, MSV, email..." />
+                                   placeholder="Tìm theo tên, MSV, email, SĐT..." />
                         </div>
                     </div>
 
@@ -212,6 +212,7 @@
                         <tr>
                             <th class="ps-4 py-3">Thông tin người dùng</th>
                             <th>Mã định danh (MSV/MGV)</th>
+                            <th>Số điện thoại</th>
                             <th>Lớp</th>
                             <th>Khoa / Viện / Bộ môn</th>
                             <th>Vai trò</th>
@@ -224,7 +225,7 @@
                         @if (!Model.Any())
                         {
                             <tr>
-                                <td colspan="8" class="text-center py-5 text-muted">
+                                <td colspan="9" class="text-center py-5 text-muted">
                                     Không có người dùng phù hợp với bộ lọc hiện tại.
                                 </td>
                             </tr>
@@ -265,6 +266,19 @@
                                 </td>
 
                                 <td class="fw-bold text-dark">@item.StudentCode</td>
+
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(item.Phone))
+                                    {
+                                        <a href="tel:@item.Phone" class="text-decoration-none fw-bold text-dark">
+                                            <i class="fa fa-phone text-success me-1"></i>@item.Phone
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">—</span>
+                                    }
+                                </td>
 
                                 <td>
                                     @if (!string.IsNullOrWhiteSpace(item.ClassName))
@@ -440,8 +454,9 @@
                             <div>1. StudentCode</div>
                             <div>2. FullName</div>
                             <div>3. Email</div>
-                            <div>4. ClassName</div>
-                            <div>5. DepartmentName</div>
+                            <div>4. Phone</div>
+                            <div>5. ClassName</div>
+                            <div>6. DepartmentName</div>
                             <hr />
                             <div>Mật khẩu mặc định sau khi import: <strong>123456</strong></div>
                         </div>

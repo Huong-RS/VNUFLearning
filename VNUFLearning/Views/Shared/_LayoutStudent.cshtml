@@ -2,6 +2,18 @@
     var path = Context.Request.Path.Value?.ToLower() ?? "";
     var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "Sinh viên";
     var initials = string.Join("", fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).TakeLast(2).Select(x => x[0])).ToUpper();
+    var userIdValue = User.FindFirst("UserId")?.Value;
+    string? topbarAvatarUrl = null;
+
+    // Luôn đọc AvatarUrl mới nhất từ CSDL để topbar đồng bộ sau khi người dùng đổi ảnh.
+    if (int.TryParse(userIdValue, out var currentUserId))
+    {
+        var dbContext = Context.RequestServices.GetService(typeof(VNUFLearning.Data.VnufLearningContext)) as VNUFLearning.Data.VnufLearningContext;
+        topbarAvatarUrl = dbContext?.Users
+            .Where(u => u.UserId == currentUserId)
+            .Select(u => u.AvatarUrl)
+            .FirstOrDefault();
+    }
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -86,7 +98,14 @@ app.MapHub
                         <div class="topbar-user-role">Sinh viên</div>
                     </div>
 
-                    <div class="topbar-avatar">@initials</div>
+                    <div class="topbar-avatar-wrap">
+                        <img class="topbar-avatar topbar-avatar-img @(string.IsNullOrWhiteSpace(topbarAvatarUrl) ? "d-none" : "")"
+                             src="@topbarAvatarUrl"
+                             alt="Ảnh đại diện của @fullName" />
+                        <div class="topbar-avatar topbar-avatar-placeholder @(string.IsNullOrWhiteSpace(topbarAvatarUrl) ? "" : "d-none")">
+                            @initials
+                        </div>
+                    </div>
 
                     <a href="/Account/Logout" class="btn btn-outline-danger rounded-4 fw-bold">
                         <i class="fa-solid fa-right-from-bracket me-1"></i> Đăng xuất

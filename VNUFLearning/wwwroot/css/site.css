@@ -931,6 +931,18 @@ body {
     box-shadow: 0 6px 14px rgba(0,0,0,.15);
 }
 
+.topbar-avatar-wrap {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+}
+
+.topbar-avatar-img {
+    display: block;
+    object-fit: cover;
+    background: #f3f4f6;
+}
+
 .vnuf-page {
     padding: 32px 36px;
 }

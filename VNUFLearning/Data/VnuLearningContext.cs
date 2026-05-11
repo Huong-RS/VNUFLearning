@@ -352,6 +352,8 @@ public partial class VnufLearningContext : DbContext
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
                 .IsUnicode(false);
+            entity.Property(e => e.Phone).HasMaxLength(20);
+            entity.Property(e => e.Bio).HasMaxLength(500);
             entity.Property(e => e.FullName).HasMaxLength(100);
             entity.Property(e => e.StudentCode)
                 .HasMaxLength(20)

@@ -289,17 +289,32 @@
         </div>
 
         <div class="profile-actions">
-            <button type="button" class="btn btn-success rounded-4 fw-bold px-4" data-profile-tab-target="intro">
+            <button type="button" class="btn btn-success rounded-4 fw-bold px-4" data-profile-tab-target="settings">
                 <i class="fa-solid fa-pen me-1"></i>
                 Cập nhật hồ sơ
             </button>
         </div>
     </section>
 
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success rounded-4 fw-bold">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger rounded-4 fw-bold">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["Error"]
+        </div>
+    }
+
     <nav class="profile-tabs" aria-label="Profile tabs">
         <button type="button" class="profile-tab active" data-profile-tab="activities">Hoạt động</button>
         <button type="button" class="profile-tab" data-profile-tab="intro">Giới thiệu</button>
         <button type="button" class="profile-tab" data-profile-tab="progress">Tiến độ</button>
+        <button type="button" class="profile-tab" data-profile-tab="settings">Cài đặt & Bảo mật</button>
     </nav>
 
     <section id="activities" class="profile-panel active">
@@ -361,6 +376,95 @@
             Tiến độ học tập/giảng dạy
         </div>
     </section>
+
+    <section id="settings" class="profile-panel">
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="border rounded-4 p-4 h-100 bg-light-subtle">
+                    <h3 class="h5 fw-bold mb-3">
+                        <i class="fa-solid fa-user-pen text-success me-2"></i>
+                        Chỉnh sửa thông tin
+                    </h3>
+
+                    <form asp-controller="Profile" asp-action="UpdateProfile" method="post" class="row g-3">
+                        @Html.AntiForgeryToken()
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Họ và tên</label>
+                            <input type="text" class="form-control bg-body-secondary" value="@Model.FullName" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Mã SV/GV</label>
+                            <input type="text" class="form-control bg-body-secondary" value="@Model.Code" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Email</label>
+                            <input type="email" class="form-control bg-body-secondary" value="@Model.Email" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Ngành - Khoa</label>
+                            <input type="text" class="form-control bg-body-secondary" value="@(string.IsNullOrWhiteSpace(Model.DepartmentName) ? "Chưa cập nhật" : Model.DepartmentName)" readonly />
+                        </div>
+
+                        <div class="col-12">
+                            <label for="Phone" class="form-label fw-bold">Số điện thoại</label>
+                            <input id="Phone" name="Phone" type="tel" class="form-control" maxlength="20" value="@Model.Phone" placeholder="Nhập số điện thoại" />
+                        </div>
+
+                        <div class="col-12">
+                            <label for="Bio" class="form-label fw-bold">Giới thiệu bản thân</label>
+                            <textarea id="Bio" name="Bio" class="form-control" rows="5" maxlength="500" placeholder="Viết vài dòng giới thiệu về bạn">@Model.Bio</textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-success rounded-4 fw-bold px-4">
+                                <i class="fa-solid fa-floppy-disk me-1"></i>
+                                Lưu thay đổi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="border rounded-4 p-4 h-100 bg-light-subtle">
+                    <h3 class="h5 fw-bold mb-3">
+                        <i class="fa-solid fa-lock text-danger me-2"></i>
+                        Đổi mật khẩu
+                    </h3>
+
+                    <form asp-controller="Profile" asp-action="ChangePassword" method="post" class="row g-3">
+                        @Html.AntiForgeryToken()
+
+                        <div class="col-12">
+                            <label for="OldPassword" class="form-label fw-bold">Mật khẩu cũ</label>
+                            <input id="OldPassword" name="OldPassword" type="password" class="form-control" autocomplete="current-password" required />
+                        </div>
+
+                        <div class="col-12">
+                            <label for="NewPassword" class="form-label fw-bold">Mật khẩu mới</label>
+                            <input id="NewPassword" name="NewPassword" type="password" class="form-control" autocomplete="new-password" minlength="6" required />
+                        </div>
+
+                        <div class="col-12">
+                            <label for="ConfirmNewPassword" class="form-label fw-bold">Xác nhận mật khẩu mới</label>
+                            <input id="ConfirmNewPassword" name="ConfirmNewPassword" type="password" class="form-control" autocomplete="new-password" minlength="6" required />
+                        </div>
+
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-danger rounded-4 fw-bold px-4">
+                                <i class="fa-solid fa-key me-1"></i>
+                                Đổi mật khẩu
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
 
 @section Scripts {
@@ -420,6 +524,15 @@
                     profileAvatar.src = `${result.avatarUrl}?v=${Date.now()}`;
                     profileAvatar.classList.remove("d-none");
                     avatarInitials.classList.add("d-none");
+
+                    const topbarAvatar = document.querySelector(".topbar-avatar-img");
+                    const topbarInitials = document.querySelector(".topbar-avatar-placeholder");
+                    if (topbarAvatar) {
+                        topbarAvatar.src = `${result.avatarUrl}?v=${Date.now()}`;
+                        topbarAvatar.classList.remove("d-none");
+                    }
+                    topbarInitials?.classList.add("d-none");
+
                     avatarMessage.className = "small mt-2 text-success";
                     avatarMessage.textContent = result.message;
                 } catch (error) {

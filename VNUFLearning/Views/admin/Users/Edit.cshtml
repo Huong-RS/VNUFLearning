@@ -37,6 +37,13 @@
                         <input asp-for="Email" class="form-control" />
                         <span asp-validation-for="Email" class="text-danger small"></span>
                     </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Phone" class="form-label fw-bold"></label>
+                        <input asp-for="Phone" class="form-control" maxlength="20" placeholder="Ví dụ: 0912345678" />
+                        <span asp-validation-for="Phone" class="text-danger small"></span>
+                    </div>
+
                     <div class="mb-3">
                         <label asp-for="ClassName" class="form-label fw-bold">Lớp</label>
                         <input asp-for="ClassName" class="form-control" placeholder="Ví dụ: K67CNTT" />

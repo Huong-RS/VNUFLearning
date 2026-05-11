@@ -52,15 +52,15 @@ namespace VNUFLearning.Controllers
 
             if (user == null)
             {
-                ViewBag.Error = "Tài khoản hoặc mật khẩu không chính xác.";
-                return View();
+                TempData["ErrorMessage"] = "Tài khoản hoặc mật khẩu không chính xác.";
+                return RedirectToAction(nameof(Login));
             }
 
             var (matched, needsRehash) = PasswordHasher.Verify(password, user.PasswordHash);
             if (!matched)
             {
-                ViewBag.Error = "Tài khoản hoặc mật khẩu không chính xác.";
-                return View();
+                TempData["ErrorMessage"] = "Tài khoản hoặc mật khẩu không chính xác.";
+                return RedirectToAction(nameof(Login));
             }
 
             // Auto-migrate: nếu mật khẩu cũ là plain-text, hash lại bằng BCrypt

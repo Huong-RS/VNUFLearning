@@ -52,7 +52,8 @@ namespace VNUFLearning.Controllers.Admin
                 query = query.Where(u =>
                     u.StudentCode.Contains(keyword) ||
                     u.FullName.Contains(keyword) ||
-                    (u.Email != null && u.Email.Contains(keyword)));
+                    (u.Email != null && u.Email.Contains(keyword)) ||
+                    (u.Phone != null && u.Phone.Contains(keyword)));
             }
 
             var users = await query
@@ -116,6 +117,7 @@ namespace VNUFLearning.Controllers.Admin
                 StudentCode = studentCode,
                 FullName = model.FullName.Trim(),
                 Email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim(),
+                Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim(),
                 PasswordHash = password,
                 RoleId = model.RoleId,
                 CreatedAt = DateTime.Now,
@@ -140,20 +142,23 @@ namespace VNUFLearning.Controllers.Admin
             ws.Cell(1, 1).Value = "StudentCode";
             ws.Cell(1, 2).Value = "FullName";
             ws.Cell(1, 3).Value = "Email";
-            ws.Cell(1, 4).Value = "ClassName";
-            ws.Cell(1, 5).Value = "DepartmentName";
+            ws.Cell(1, 4).Value = "Phone";
+            ws.Cell(1, 5).Value = "ClassName";
+            ws.Cell(1, 6).Value = "DepartmentName";
 
             ws.Cell(2, 1).Value = "2274801";
             ws.Cell(2, 2).Value = "Nguyễn Văn A";
             ws.Cell(2, 3).Value = "nguyenvana@gmail.com";
-            ws.Cell(2, 4).Value = "K67CNTT";
-            ws.Cell(2, 5).Value = "Khoa Công nghệ thông tin";
+            ws.Cell(2, 4).Value = "0912345678";
+            ws.Cell(2, 5).Value = "K67CNTT";
+            ws.Cell(2, 6).Value = "Khoa Công nghệ thông tin";
 
             ws.Cell(3, 1).Value = "GV01";
             ws.Cell(3, 2).Value = "Giảng viên Nguyễn Văn B";
             ws.Cell(3, 3).Value = "gv01@vnuf.edu.vn";
-            ws.Cell(3, 4).Value = "";
-            ws.Cell(3, 5).Value = "Khoa Công nghệ thông tin";
+            ws.Cell(3, 4).Value = "0987654321";
+            ws.Cell(3, 5).Value = "";
+            ws.Cell(3, 6).Value = "Khoa Công nghệ thông tin";
 
             ws.Row(1).Style.Font.Bold = true;
             ws.Columns().AdjustToContents();
@@ -223,8 +228,9 @@ namespace VNUFLearning.Controllers.Admin
                     var studentCode = worksheet.Cell(row, 1).GetValue<string>().Trim();
                     var fullName = worksheet.Cell(row, 2).GetValue<string>().Trim();
                     var email = worksheet.Cell(row, 3).GetValue<string>().Trim();
-                    var className = worksheet.Cell(row, 4).GetValue<string>().Trim();
-                    var departmentName = worksheet.Cell(row, 5).GetValue<string>().Trim();
+                    var phone = worksheet.Cell(row, 4).GetValue<string>().Trim();
+                    var className = worksheet.Cell(row, 5).GetValue<string>().Trim();
+                    var departmentName = worksheet.Cell(row, 6).GetValue<string>().Trim();
 
                     if (string.IsNullOrWhiteSpace(studentCode))
                     {
@@ -270,6 +276,7 @@ namespace VNUFLearning.Controllers.Admin
                         StudentCode = studentCode,
                         FullName = fullName,
                         Email = string.IsNullOrWhiteSpace(email) ? null : email,
+                        Phone = string.IsNullOrWhiteSpace(phone) ? null : phone,
                         ClassName = string.IsNullOrWhiteSpace(className) ? null : className,
                         DepartmentName = string.IsNullOrWhiteSpace(departmentName) ? null : departmentName,
                         PasswordHash = "123456",
@@ -328,6 +335,7 @@ namespace VNUFLearning.Controllers.Admin
                 StudentCode = user.StudentCode,
                 FullName = user.FullName,
                 Email = user.Email,
+                Phone = user.Phone,
                 RoleId = user.RoleId,
                 ClassName = user.ClassName,
                 DepartmentName = user.DepartmentName
@@ -375,6 +383,7 @@ namespace VNUFLearning.Controllers.Admin
             user.StudentCode = studentCode;
             user.FullName = model.FullName.Trim();
             user.Email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim();
+            user.Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim();
             user.RoleId = model.RoleId;
             user.ClassName = string.IsNullOrWhiteSpace(model.ClassName) ? null : model.ClassName.Trim();
             user.DepartmentName = string.IsNullOrWhiteSpace(model.DepartmentName) ? null : model.DepartmentName.Trim();

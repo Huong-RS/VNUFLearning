@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using VNUFLearning.Data;
 using VNUFLearning.Models.ViewModels;
+using VNUFLearning.Services;
 using VNUFLearning.Services.Storage;
 
 namespace VNUFLearning.Controllers
@@ -61,8 +62,9 @@ namespace VNUFLearning.Controllers
                     AvatarUrl = user.AvatarUrl,
                     JoinDate = user.CreatedAt,
                     Code = user.StudentCode,
-                    // CSDL hiện tại chưa có cột Bio riêng, nên hiển thị mô tả ngắn từ dữ liệu sẵn có.
-                    Bio = BuildBio(user.ClassName, user.DepartmentName),
+                    Phone = user.Phone,
+                    Bio = string.IsNullOrWhiteSpace(user.Bio) ? BuildBio(user.ClassName, user.DepartmentName) : user.Bio,
+                    DepartmentName = user.DepartmentName,
                     RecentActivities = await GetRecentActivitiesAsync(user.UserId)
                 };
 
@@ -124,6 +126,116 @@ namespace VNUFLearning.Controllers
                     message = ex.Message
                 });
             }
+        }
+
+        [HttpPost("/Profile/UpdateProfile")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile(EditProfileViewModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    TempData["Error"] = "Thông tin cập nhật không hợp lệ.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    TempData["Error"] = "Phiên đăng nhập không hợp lệ.";
+                    return RedirectToAction("Login", "Account");
+                }
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId.Value);
+                if (user == null)
+                {
+                    TempData["Error"] = "Không tìm thấy tài khoản.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Bảo mật nghiệp vụ: chỉ cập nhật hai trường được phép đổi.
+                user.Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim();
+                user.Bio = string.IsNullOrWhiteSpace(model.Bio) ? null : model.Bio.Trim();
+
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Cập nhật thông tin cá nhân thành công.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi cập nhật thông tin cá nhân.");
+                TempData["Error"] = "Không thể cập nhật thông tin cá nhân. Vui lòng thử lại sau.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost("/Profile/ChangePassword")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(model.OldPassword) ||
+                    string.IsNullOrWhiteSpace(model.NewPassword) ||
+                    string.IsNullOrWhiteSpace(model.ConfirmNewPassword))
+                {
+                    TempData["Error"] = "Vui lòng nhập đầy đủ thông tin đổi mật khẩu.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (!string.Equals(model.NewPassword, model.ConfirmNewPassword, StringComparison.Ordinal))
+                {
+                    TempData["Error"] = "Mật khẩu mới và xác nhận mật khẩu không khớp.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (model.NewPassword.Length < 6)
+                {
+                    TempData["Error"] = "Mật khẩu mới phải có ít nhất 6 ký tự.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    TempData["Error"] = "Phiên đăng nhập không hợp lệ.";
+                    return RedirectToAction("Login", "Account");
+                }
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId.Value);
+                if (user == null)
+                {
+                    TempData["Error"] = "Không tìm thấy tài khoản.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Xác thực mật khẩu cũ trước khi ghi hash mới.
+                var (matched, _) = PasswordHasher.Verify(model.OldPassword, user.PasswordHash);
+                if (!matched)
+                {
+                    TempData["Error"] = "Mật khẩu cũ không chính xác.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (string.Equals(model.OldPassword, model.NewPassword, StringComparison.Ordinal))
+                {
+                    TempData["Error"] = "Mật khẩu mới phải khác mật khẩu hiện tại.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                user.PasswordHash = PasswordHasher.Hash(model.NewPassword);
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "Đổi mật khẩu thành công.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi đổi mật khẩu trong trang hồ sơ.");
+                TempData["Error"] = "Không thể đổi mật khẩu. Vui lòng thử lại sau.";
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         private int? GetCurrentUserId()

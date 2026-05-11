@@ -127,13 +127,13 @@
                     <tr class="text-uppercase text-muted small">
                         <th class="ps-4" style="width:80px;">ID</th>
                         <th style="min-width:180px;">Môn học</th>
-                        <th style="min-width:420px;">Nội dung câu hỏi</th>
+                        <th style="min-width:300px; width:32%;">Nội dung câu hỏi</th>
                         <th style="width:130px;">Loại</th>
                         <th style="width:110px;">Mức độ</th>
-                        <th style="width:140px;">Đáp án</th>
+                        <th style="min-width:260px; width:22%;">Đáp án</th>
                         <th style="min-width:170px;">Người tạo</th>
                         <th style="width:130px;">Ngày tạo</th>
-                        <th class="text-end pe-4" style="width:130px;">Thao tác</th>
+                        <th class="text-end pe-4" style="width:170px;">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -159,7 +159,7 @@
                             </td>
 
                             <td>
-                                <div class="fw-semibold text-dark" style="max-width:520px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+                                <div class="fw-semibold text-dark" style="max-width:380px; white-space:normal; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;"
                                      title="@item.Content">
                                     @item.Content
                                 </div>
@@ -205,8 +205,11 @@
                                 </span>
                             </td>
 
-                            <td class="fw-semibold text-success">
-                                @(string.IsNullOrWhiteSpace(item.CorrectAnswer) ? "-" : item.CorrectAnswer)
+                            <td class="fw-semibold text-success" style="min-width:260px;">
+                                <div style="max-width:320px; white-space:normal; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;"
+                                     title="@item.CorrectAnswer">
+                                    @(string.IsNullOrWhiteSpace(item.CorrectAnswer) ? "-" : item.CorrectAnswer)
+                                </div>
                             </td>
 
                             <td class="text-muted">
@@ -219,20 +222,227 @@
 
                             <td class="text-end pe-4">
                                 <div class="btn-group">
-                                    <a href="/Admin/Questions/Edit/@item.QuestionId"
-                                       class="btn btn-sm btn-outline-warning"
-                                       title="Chỉnh sửa">
-                                        <i class="fa fa-pen"></i>
-                                    </a>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-info"
+                                            title="Xem chi tiết"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#detailQuestionModal-@item.QuestionId">
+                                        <i class="fa fa-eye"></i>
+                                    </button>
 
-                                    <a href="/Admin/Questions/Delete/@item.QuestionId"
-                                       class="btn btn-sm btn-outline-danger"
-                                       title="Xóa">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-warning"
+                                            title="Chỉnh sửa"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editQuestionModal-@item.QuestionId">
+                                        <i class="fa fa-pen"></i>
+                                    </button>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            title="Xóa"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteQuestionModal-@item.QuestionId">
                                         <i class="fa fa-trash"></i>
-                                    </a>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
+
+                        <div class="modal fade" id="detailQuestionModal-@item.QuestionId" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                                <div class="modal-content border-0 rounded-4 shadow">
+                                    <div class="modal-header bg-light">
+                                        <div>
+                                            <h5 class="modal-title fw-bold">Chi tiết câu hỏi #Q@item.QuestionId</h5>
+                                            <div class="text-muted small">@item.Subject.SubjectName</div>
+                                        </div>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <dl class="row mb-0">
+                                            <dt class="col-sm-3">Nội dung</dt>
+                                            <dd class="col-sm-9">@item.Content</dd>
+
+                                            <dt class="col-sm-3">Loại câu hỏi</dt>
+                                            <dd class="col-sm-9">@(item.QuestionType == 1 ? "Trắc nghiệm" : "Tự luận")</dd>
+
+                                            <dt class="col-sm-3">Mức độ</dt>
+                                            <dd class="col-sm-9">@levelText</dd>
+
+                                            <dt class="col-sm-3">Chương / Chủ đề</dt>
+                                            <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(item.Chapter) ? "-" : item.Chapter)</dd>
+
+                                            @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                                            {
+                                                <dt class="col-sm-3">Ảnh minh họa</dt>
+                                                <dd class="col-sm-9">
+                                                    <a href="@item.ImageUrl" target="_blank" rel="noopener">Mở ảnh</a>
+                                                </dd>
+                                            }
+
+                                            @if (item.QuestionType == 1)
+                                            {
+                                                <dt class="col-sm-3">Đáp án A</dt>
+                                                <dd class="col-sm-9">@item.OptionA</dd>
+                                                <dt class="col-sm-3">Đáp án B</dt>
+                                                <dd class="col-sm-9">@item.OptionB</dd>
+                                                <dt class="col-sm-3">Đáp án C</dt>
+                                                <dd class="col-sm-9">@item.OptionC</dd>
+                                                <dt class="col-sm-3">Đáp án D</dt>
+                                                <dd class="col-sm-9">@item.OptionD</dd>
+                                            }
+
+                                            <dt class="col-sm-3">Đáp án đúng / mẫu</dt>
+                                            <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(item.CorrectAnswer) ? "-" : item.CorrectAnswer)</dd>
+
+                                            <dt class="col-sm-3">Giải thích</dt>
+                                            <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(item.Explaination) ? "-" : item.Explaination)</dd>
+
+                                            <dt class="col-sm-3">Người tạo</dt>
+                                            <dd class="col-sm-9">@(item.CreatedByUser?.FullName ?? "Chưa rõ")</dd>
+
+                                            <dt class="col-sm-3">Ngày tạo</dt>
+                                            <dd class="col-sm-9">@(item.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</dd>
+                                        </dl>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-outline-secondary rounded-4" data-bs-dismiss="modal">Đóng</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal fade" id="editQuestionModal-@item.QuestionId" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                                <div class="modal-content border-0 rounded-4 shadow">
+                                    <form action="/Admin/Questions/Edit/@item.QuestionId" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="QuestionId" value="@item.QuestionId" />
+                                        <input type="hidden" name="CreatedByUserId" value="@item.CreatedByUserId" />
+                                        <input type="hidden" name="CreatedAt" value="@item.CreatedAt?.ToString("O")" />
+                                        <input type="hidden" name="IsActive" value="@item.IsActive.ToString()" />
+
+                                        <div class="modal-header text-white" style="background:#005b33;">
+                                            <h5 class="modal-title fw-bold">
+                                                <i class="fa fa-pen me-2"></i>Chỉnh sửa câu hỏi #Q@item.QuestionId
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+
+                                        <div class="modal-body p-4">
+                                            <div class="row g-4">
+                                                <div class="col-md-8">
+                                                    <label class="form-label fw-bold">Nội dung câu hỏi</label>
+                                                    <textarea name="Content" class="form-control" rows="4" required>@item.Content</textarea>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label fw-bold">Môn học</label>
+                                                    <select name="SubjectId" class="form-select" required>
+                                                        @foreach (Microsoft.AspNetCore.Mvc.Rendering.SelectListItem subject in ViewBag.SubjectList)
+                                                        {
+                                                            <option value="@subject.Value" selected="@(subject.Value == item.SubjectId.ToString())">@subject.Text</option>
+                                                        }
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label fw-bold">Loại câu hỏi</label>
+                                                    <select name="QuestionType" class="form-select question-type-select" data-target="#adminOptions-@item.QuestionId">
+                                                        <option value="1" selected="@(item.QuestionType == 1)">Trắc nghiệm</option>
+                                                        <option value="2" selected="@(item.QuestionType == 2)">Tự luận</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label fw-bold">Mức độ</label>
+                                                    <select name="Level" class="form-select">
+                                                        <option value="1" selected="@(item.Level == 1)">Dễ</option>
+                                                        <option value="2" selected="@(item.Level == 2)">Trung bình</option>
+                                                        <option value="3" selected="@(item.Level == 3)">Khó</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label fw-bold">Chương / Chủ đề</label>
+                                                    <input name="Chapter" class="form-control" value="@item.Chapter" />
+                                                </div>
+
+                                                <div class="col-md-12">
+                                                    <label class="form-label fw-bold">Ảnh minh họa URL</label>
+                                                    <input name="ImageUrl" class="form-control" value="@item.ImageUrl" />
+                                                </div>
+
+                                                <div id="adminOptions-@item.QuestionId" class="row g-4 question-options">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-bold">Đáp án A</label>
+                                                        <input name="OptionA" class="form-control" value="@item.OptionA" />
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-bold">Đáp án B</label>
+                                                        <input name="OptionB" class="form-control" value="@item.OptionB" />
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-bold">Đáp án C</label>
+                                                        <input name="OptionC" class="form-control" value="@item.OptionC" />
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-bold">Đáp án D</label>
+                                                        <input name="OptionD" class="form-control" value="@item.OptionD" />
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-bold">Đáp án đúng / Gợi ý đáp án</label>
+                                                    <input name="CorrectAnswer" class="form-control" value="@item.CorrectAnswer" />
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-bold">Giải thích</label>
+                                                    <input name="Explaination" class="form-control" value="@item.Explaination" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="modal-footer bg-light">
+                                            <button type="button" class="btn btn-outline-secondary rounded-4" data-bs-dismiss="modal">Hủy</button>
+                                            <button type="submit" class="btn btn-success rounded-4 fw-bold">
+                                                <i class="fa fa-save me-1"></i>Lưu thay đổi
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal fade" id="deleteQuestionModal-@item.QuestionId" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 rounded-4 shadow">
+                                    <div class="modal-header bg-danger text-white">
+                                        <h5 class="modal-title fw-bold">
+                                            <i class="fa fa-triangle-exclamation me-2"></i>Xác nhận xóa câu hỏi
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p class="mb-2">Bạn có chắc chắn muốn xóa câu hỏi <strong>#Q@item.QuestionId</strong>?</p>
+                                        <div class="p-3 rounded-3 bg-light text-muted small" style="max-height:120px; overflow:auto;">
+                                            @item.Content
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer bg-light">
+                                        <button type="button" class="btn btn-outline-secondary rounded-4" data-bs-dismiss="modal">Hủy</button>
+                                        <form action="/Admin/Questions/Delete/@item.QuestionId" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-danger rounded-4 fw-bold">
+                                                <i class="fa fa-trash me-1"></i>Xóa câu hỏi
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     }
                 </tbody>
             </table>
@@ -378,6 +588,18 @@
             params.set("pageSize", this.value);
             params.set("page", "1");
             window.location.href = "/Admin/Questions?" + params.toString();
+        });
+
+        function toggleQuestionOptions(select) {
+            const target = document.querySelector(select.dataset.target);
+            if (!target) return;
+
+            target.style.display = select.value === "1" ? "flex" : "none";
+        }
+
+        document.querySelectorAll(".question-type-select").forEach(select => {
+            toggleQuestionOptions(select);
+            select.addEventListener("change", () => toggleQuestionOptions(select));
         });
     </script>
 }
