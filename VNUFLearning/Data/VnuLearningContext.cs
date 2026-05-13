@@ -84,6 +84,10 @@ public partial class VnufLearningContext : DbContext
             entity.Property(e => e.ChapterTo).HasMaxLength(100);
 
             entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.SourceFileUrl).HasMaxLength(500);
+            entity.Property(e => e.SourceFileObjectName).HasMaxLength(500);
+            entity.Property(e => e.SourceFileName).HasMaxLength(255);
+            entity.Property(e => e.SourceFileType).HasMaxLength(50);
             entity.HasKey(e => e.ExamId);
 
             entity.Property(e => e.Title).HasMaxLength(200);

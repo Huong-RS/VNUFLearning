@@ -1,10 +1,12 @@
 ﻿using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using VNUFLearning.Data;
 using VNUFLearning.Models;
+using VNUFLearning.Services.Storage;
 
 namespace VNUFLearning.Controllers.Teacher
 {
@@ -13,10 +15,14 @@ namespace VNUFLearning.Controllers.Teacher
     public class ExamsController : Controller
     {
         private readonly VnufLearningContext _context;
+        private readonly IMinioService _minioService;
 
-        public ExamsController(VnufLearningContext context)
+        public ExamsController(
+            VnufLearningContext context,
+            IMinioService minioService)
         {
             _context = context;
+            _minioService = minioService;
         }
 
         [HttpGet]
@@ -170,6 +176,27 @@ namespace VNUFLearning.Controllers.Teacher
                 .Take(model.TotalQuestions)
                 .ToListAsync();
 
+            StorageUploadResult sourceFile;
+
+            try
+            {
+                sourceFile = await UploadGeneratedExamFileAsync(model, pickedQuestions);
+            }
+            catch (Exception ex)
+            {
+                _context.Exams.Remove(model);
+                await _context.SaveChangesAsync();
+
+                TempData["Error"] = $"Tạo file đề thi trên MinIO thất bại: {ex.Message}";
+                return Redirect("/Teacher/Exams/Create");
+            }
+
+            model.SourceFileUrl = sourceFile.Url;
+            model.SourceFileObjectName = sourceFile.ObjectName;
+            model.SourceFileName = sourceFile.OriginalFileName;
+            model.SourceFileType = "XLSX";
+            model.SourceFileSize = sourceFile.Size;
+
             int order = 1;
 
             foreach (var q in pickedQuestions)
@@ -266,6 +293,15 @@ namespace VNUFLearning.Controllers.Teacher
                 return Redirect("/Teacher/Exams/Create");
             }
 
+            var allowedExtensions = new[] { ".xlsx", ".xls" };
+            var extension = Path.GetExtension(file.FileName).ToLower();
+
+            if (!allowedExtensions.Contains(extension))
+            {
+                TempData["Error"] = "Chỉ cho phép import file Excel (.xlsx, .xls).";
+                return Redirect("/Teacher/Exams/Create");
+            }
+
             using var stream = new MemoryStream();
             await file.CopyToAsync(stream);
             stream.Position = 0;
@@ -280,6 +316,22 @@ namespace VNUFLearning.Controllers.Teacher
                 return Redirect("/Teacher/Exams/Create");
             }
 
+            StorageUploadResult sourceFile;
+
+            try
+            {
+                sourceFile = await _minioService.UploadAsync(
+                    file,
+                    "exams/imports",
+                    allowedExtensions,
+                    20 * 1024 * 1024);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Lưu file đề thi lên MinIO thất bại: {ex.Message}";
+                return Redirect("/Teacher/Exams/Create");
+            }
+
             var exam = new Exam
             {
                 Title = title.Trim(),
@@ -289,7 +341,12 @@ namespace VNUFLearning.Controllers.Teacher
                 TotalQuestions = lastRow - 1,
                 ExamType = examType,
                 CreatedAt = DateTime.Now,
-                IsPublished = false
+                IsPublished = false,
+                SourceFileUrl = sourceFile.Url,
+                SourceFileObjectName = sourceFile.ObjectName,
+                SourceFileName = sourceFile.OriginalFileName,
+                SourceFileType = extension.Replace(".", "").ToUpper(),
+                SourceFileSize = sourceFile.Size
             };
 
             _context.Exams.Add(exam);
@@ -415,6 +472,8 @@ namespace VNUFLearning.Controllers.Teacher
 
             if (exam == null) return NotFound();
 
+            await _minioService.DeleteAsync(exam.SourceFileObjectName ?? string.Empty);
+
             _context.ExamQuestions.RemoveRange(exam.ExamQuestions);
             _context.Exams.Remove(exam);
 
@@ -422,6 +481,27 @@ namespace VNUFLearning.Controllers.Teacher
 
             TempData["Success"] = "Đã xóa đề thi.";
             return Redirect("/Teacher/Exams");
+        }
+
+        [HttpGet]
+        [Route("~/Teacher/Exams/DownloadSourceFile/{id}")]
+        public async Task<IActionResult> DownloadSourceFile(int id)
+        {
+            var teacherId = GetTeacherId();
+            if (teacherId == null) return Redirect("/Account/Login");
+
+            var exam = await _context.Exams
+                .FirstOrDefaultAsync(e => e.ExamId == id && e.TeacherId == teacherId.Value);
+
+            if (exam == null) return NotFound();
+
+            if (string.IsNullOrWhiteSpace(exam.SourceFileUrl))
+            {
+                TempData["Error"] = "Đề thi này chưa có file nguồn trên MinIO.";
+                return Redirect("/Teacher/Exams");
+            }
+
+            return Redirect(exam.SourceFileUrl);
         }
 
         private int? GetTeacherId()
@@ -466,6 +546,84 @@ namespace VNUFLearning.Controllers.Teacher
                 _ => answer.ToUpper()
             };
         }
+
+        private async Task<StorageUploadResult> UploadGeneratedExamFileAsync(Exam exam, List<Question> questions)
+        {
+            var fileName = $"{SanitizeFileName(exam.Title)}_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+            using var fileStream = BuildGeneratedExamWorkbookStream(exam, questions);
+
+            var formFile = new FormFile(fileStream, 0, fileStream.Length, "file", fileName)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            };
+
+            return await _minioService.UploadAsync(
+                formFile,
+                "exams/random",
+                new[] { ".xlsx" },
+                20 * 1024 * 1024);
+        }
+
+        private static MemoryStream BuildGeneratedExamWorkbookStream(Exam exam, List<Question> questions)
+        {
+            using var workbook = new XLWorkbook();
+            var ws = workbook.Worksheets.Add("DeThiRandom");
+
+            ws.Cell(1, 1).Value = "Title";
+            ws.Cell(1, 2).Value = exam.Title;
+            ws.Cell(2, 1).Value = "DurationMinutes";
+            ws.Cell(2, 2).Value = exam.DurationMinutes;
+            ws.Cell(3, 1).Value = "ExamType";
+            ws.Cell(3, 2).Value = exam.ExamType;
+
+            ws.Cell(5, 1).Value = "Content";
+            ws.Cell(5, 2).Value = "QuestionType";
+            ws.Cell(5, 3).Value = "OptionA";
+            ws.Cell(5, 4).Value = "OptionB";
+            ws.Cell(5, 5).Value = "OptionC";
+            ws.Cell(5, 6).Value = "OptionD";
+            ws.Cell(5, 7).Value = "CorrectAnswer";
+            ws.Cell(5, 8).Value = "Level";
+            ws.Cell(5, 9).Value = "Chapter";
+            ws.Cell(5, 10).Value = "Explaination";
+
+            var row = 6;
+            foreach (var question in questions)
+            {
+                ws.Cell(row, 1).Value = question.Content;
+                ws.Cell(row, 2).Value = question.QuestionType;
+                ws.Cell(row, 3).Value = question.OptionA;
+                ws.Cell(row, 4).Value = question.OptionB;
+                ws.Cell(row, 5).Value = question.OptionC;
+                ws.Cell(row, 6).Value = question.OptionD;
+                ws.Cell(row, 7).Value = question.CorrectAnswer;
+                ws.Cell(row, 8).Value = question.Level;
+                ws.Cell(row, 9).Value = question.Chapter;
+                ws.Cell(row, 10).Value = question.Explaination;
+                row++;
+            }
+
+            ws.Range(1, 1, 3, 2).Style.Font.Bold = true;
+            ws.Row(5).Style.Font.Bold = true;
+            ws.Columns().AdjustToContents();
+
+            var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            stream.Position = 0;
+            return stream;
+        }
+
+        private static string SanitizeFileName(string value)
+        {
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var cleaned = new string(value
+                .Select(ch => invalidChars.Contains(ch) ? '_' : ch)
+                .ToArray());
+
+            return string.IsNullOrWhiteSpace(cleaned) ? "DeThi" : cleaned.Trim();
+        }
+
         [HttpGet]
         [Route("~/Teacher/Exams/ManageQuestions/{id}")]
         public async Task<IActionResult> ManageQuestions(int id)

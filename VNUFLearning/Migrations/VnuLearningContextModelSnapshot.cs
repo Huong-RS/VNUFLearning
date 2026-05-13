@@ -197,6 +197,25 @@ namespace VNUFLearning.Migrations
                     b.Property<int?>("Level")
                         .HasColumnType("int");
 
+                    b.Property<string>("SourceFileName")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("SourceFileObjectName")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<long?>("SourceFileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("SourceFileType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("SourceFileUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<int>("SubjectId")
                         .HasColumnType("int");
 

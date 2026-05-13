@@ -140,6 +140,15 @@
                                     </a>
                                 </li>
 
+                                @if (!string.IsNullOrWhiteSpace(item.SourceFileUrl))
+                                {
+                                    <li>
+                                        <a class="dropdown-item" href="/Teacher/Exams/DownloadSourceFile/@item.ExamId">
+                                            <i class="fa fa-cloud-arrow-down me-2"></i> Tải file đề thi
+                                        </a>
+                                    </li>
+                                }
+
                                 <li>
                                     <form method="post"
                                           action="/Teacher/Exams/Delete/@item.ExamId"

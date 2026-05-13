@@ -24,6 +24,16 @@ public partial class Exam
     public string? Description { get; set; }
     public bool IsPublished { get; set; }
 
+    public string? SourceFileUrl { get; set; }
+
+    public string? SourceFileObjectName { get; set; }
+
+    public string? SourceFileName { get; set; }
+
+    public string? SourceFileType { get; set; }
+
+    public long? SourceFileSize { get; set; }
+
     public DateTime? CreatedAt { get; set; }
 
     public virtual Subject Subject { get; set; } = null!;
