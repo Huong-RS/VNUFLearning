@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using VNUFLearning.Data;
 using VNUFLearning.Models;
+using VNUFLearning.Services.Storage;
 
 namespace VNUFLearning.Controllers.Teacher
 {
@@ -13,11 +14,16 @@ namespace VNUFLearning.Controllers.Teacher
     {
         private readonly VnufLearningContext _context;
         private readonly IWebHostEnvironment _env;
+        private readonly IMinioService _minioService;
 
-        public DocumentsController(VnufLearningContext context, IWebHostEnvironment env)
+        public DocumentsController(
+            VnufLearningContext context,
+            IWebHostEnvironment env,
+            IMinioService minioService)
         {
             _context = context;
             _env = env;
+            _minioService = minioService;
         }
 
         [HttpGet]
@@ -114,28 +120,29 @@ namespace VNUFLearning.Controllers.Teacher
                 return Redirect("/Teacher/Documents");
             }
 
-            var folder = Path.Combine(_env.WebRootPath, "uploads", "documents");
+            StorageUploadResult uploaded;
 
-            if (!Directory.Exists(folder))
+            try
             {
-                Directory.CreateDirectory(folder);
+                uploaded = await _minioService.UploadAsync(
+                    file,
+                    "documents",
+                    allowedExtensions,
+                    50 * 1024 * 1024);
             }
-
-            var savedFileName = $"{Guid.NewGuid()}{extension}";
-            var fullPath = Path.Combine(folder, savedFileName);
-
-            using (var stream = new FileStream(fullPath, FileMode.Create))
+            catch (Exception ex)
             {
-                await file.CopyToAsync(stream);
+                TempData["Error"] = $"Upload thất bại: {ex.Message}";
+                return Redirect("/Teacher/Documents");
             }
 
             var document = new Document
             {
-                Title = Path.GetFileNameWithoutExtension(file.FileName),
-                FileName = file.FileName,
-                FilePath = "/uploads/documents/" + savedFileName,
+                Title = Path.GetFileNameWithoutExtension(uploaded.OriginalFileName),
+                FileName = uploaded.OriginalFileName,
+                FilePath = uploaded.Url,
                 FileType = extension.Replace(".", "").ToUpper(),
-                FileSize = file.Length,
+                FileSize = uploaded.Size,
                 SubjectId = subjectId,
                 UploadedBy = userId.Value,
                 CreatedAt = DateTime.Now,
@@ -168,6 +175,14 @@ namespace VNUFLearning.Controllers.Teacher
 
             if (!canAccess) return Forbid();
 
+            doc.DownloadCount++;
+            await _context.SaveChangesAsync();
+
+            if (IsRemoteFile(doc.FilePath))
+            {
+                return Redirect(doc.FilePath);
+            }
+
             var path = Path.Combine(_env.WebRootPath, doc.FilePath.TrimStart('/'));
 
             if (!System.IO.File.Exists(path))
@@ -175,9 +190,6 @@ namespace VNUFLearning.Controllers.Teacher
                 TempData["Error"] = "Không tìm thấy file trên server.";
                 return Redirect("/Teacher/Documents");
             }
-
-            doc.DownloadCount++;
-            await _context.SaveChangesAsync();
 
             var bytes = await System.IO.File.ReadAllBytesAsync(path);
             return File(bytes, "application/octet-stream", doc.FileName ?? doc.Title);
@@ -240,6 +252,12 @@ namespace VNUFLearning.Controllers.Teacher
             }
 
             return null;
+        }
+
+        private static bool IsRemoteFile(string filePath)
+        {
+            return Uri.TryCreate(filePath, UriKind.Absolute, out var uri)
+                   && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
         }
     }
 }

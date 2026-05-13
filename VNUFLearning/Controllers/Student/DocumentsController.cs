@@ -75,6 +75,14 @@ namespace VNUFLearning.Controllers.Student
 
             if (doc == null) return NotFound();
 
+            doc.DownloadCount++;
+            await _context.SaveChangesAsync();
+
+            if (IsRemoteFile(doc.FilePath))
+            {
+                return Redirect(doc.FilePath);
+            }
+
             var path = Path.Combine(_env.WebRootPath, doc.FilePath.TrimStart('/'));
 
             if (!System.IO.File.Exists(path))
@@ -82,11 +90,14 @@ namespace VNUFLearning.Controllers.Student
                 return NotFound();
             }
 
-            doc.DownloadCount++;
-            await _context.SaveChangesAsync();
-
             var bytes = await System.IO.File.ReadAllBytesAsync(path);
             return File(bytes, "application/octet-stream", doc.FileName ?? doc.Title);
+        }
+
+        private static bool IsRemoteFile(string filePath)
+        {
+            return Uri.TryCreate(filePath, UriKind.Absolute, out var uri)
+                   && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
         }
     }
 }
