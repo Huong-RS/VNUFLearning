@@ -28,9 +28,11 @@ namespace VNUFLearning.Controllers.Teacher
 
             var query = _context.BlogPosts
                 .Include(x => x.Author)
+                    .ThenInclude(x => x.Role)
                 .Include(x => x.BlogLikes)
-              .Include(x => x.Comments)
-    .ThenInclude(c => c.User)
+                .Include(x => x.Comments)
+                    .ThenInclude(c => c.User)
+                        .ThenInclude(u => u.Role)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(keyword))

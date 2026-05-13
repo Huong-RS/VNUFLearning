@@ -8,6 +8,7 @@
     var tab = ViewBag.Tab as string ?? "feed";
     var keyword = ViewBag.Keyword as string ?? "";
     int pendingCount = ViewBag.PendingCount ?? 0;
+    int currentTeacherId = ViewBag.CurrentTeacherId ?? 0;
 }
 
 <div class="teacher-blog-page">
@@ -88,6 +89,9 @@
 
         @foreach (var item in Model)
         {
+            var canEditPost = item.AuthorId == currentTeacherId;
+            var canDeletePost = canEditPost || item.Author?.Role?.RoleName == "SinhVien";
+
             <div class="post-card" id="post-card-@item.PostId">
                 <div class="post-header">
                     <div class="avatar">
@@ -99,27 +103,44 @@
                         <p>@item.CreatedAt?.ToString("dd/MM/yyyy HH:mm") · <i class="fa fa-earth-asia"></i></p>
                     </div>
 
-                    <div class="post-header-actions ms-auto">
-                        @if (item.AuthorId == ViewBag.CurrentTeacherId)
-                        {
+                    @if (canEditPost || canDeletePost)
+                    {
+                        <div class="post-header-actions ms-auto">
                             <button type="button"
-                                    class="edit-icon-btn"
-                                    onclick="openEditPost(@item.PostId)"
-                                    title="Sửa bài viết">
-                                <i class="fa fa-pen"></i>
+                                    class="post-menu-trigger"
+                                    onclick="togglePostMenu(@item.PostId, event)"
+                                    aria-label="Tùy chọn bài viết"
+                                    aria-expanded="false">
+                                <i class="fa fa-ellipsis"></i>
                             </button>
-                        }
 
-                        <form method="post"
-                              action="/Teacher/Blog/Delete/@item.PostId"
-                              onsubmit="return confirm('Giảng viên có quyền xóa bài này. Bạn chắc chắn muốn xóa?');">
-                            @Html.AntiForgeryToken()
+                            <div class="post-options-menu" id="post-menu-@item.PostId">
+                                @if (canEditPost)
+                                {
+                                    <button type="button"
+                                            class="post-option-item"
+                                            onclick="openEditPost(@item.PostId); closePostMenus();">
+                                        <i class="fa fa-pen"></i>
+                                        <span>Chỉnh sửa bài viết</span>
+                                    </button>
+                                }
 
-                            <button type="submit" class="delete-btn" title="Xóa bài viết">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        </form>
-                    </div>
+                                @if (canDeletePost)
+                                {
+                                    <form method="post"
+                                          action="/Teacher/Blog/Delete/@item.PostId"
+                                          onsubmit="return confirm('Bạn chắc chắn muốn xóa bài viết này?');">
+                                        @Html.AntiForgeryToken()
+
+                                        <button type="submit" class="post-option-item danger">
+                                            <i class="fa fa-trash"></i>
+                                            <span>Xóa bài viết</span>
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    }
                       
                 </div>
 
@@ -238,170 +259,19 @@
 
                 <div id="comment-@item.PostId" class="comment-panel">
                     <div id="comment-list-@item.PostId">
+                        @{
+                            var commentViewData = new ViewDataDictionary(ViewData)
+                            {
+                                ["AllComments"] = item.Comments,
+                                ["CurrentUserId"] = ViewBag.CurrentTeacherId ?? 0,
+                                ["IsTeacher"] = true,
+                                ["BlogPrefix"] = "/Teacher/Blog"
+                            };
+                        }
+
                         @foreach (var c in item.Comments.Where(x => x.ParentCommentId == null).OrderBy(x => x.CreatedAt))
                         {
-                            <div class="comment-item" id="comment-item-@c.CommentId">
-                                <div class="comment-avatar">
-                                    @c.User.FullName.Substring(0, 1).ToUpper()
-                                </div>
-
-                                <div class="comment-right">
-                                    <div class="comment-bubble">
-                                        <div class="comment-name">@c.User.FullName</div>
-                                        <div id="comment-content-@c.CommentId">@c.Content</div>
-
-                                        @if (c.IsEdited)
-                                        {
-                                            <button type="button"
-                                                    class="edited-label"
-                                                    onclick="showCommentHistory(@c.CommentId)">
-                                                Đã chỉnh sửa
-                                            </button>
-                                        }
-                                        @if (!string.IsNullOrWhiteSpace(c.ImageUrl))
-                                        {
-                                            if (c.ImageUrl.EndsWith(".mp4"))
-                                            {
-                                                <video src="@c.ImageUrl" class="comment-media" controls></video>
-                                            }
-                                            else
-                                            {
-                                                <img src="@c.ImageUrl" class="comment-media" />
-                                            }
-                                        }
-
-                                        @if (!string.IsNullOrWhiteSpace(c.AttachmentUrl))
-                                        {
-                                            <a href="/Teacher/Blog/DownloadCommentFile/@c.CommentId" class="comment-attachment">
-                                                <i class="fa fa-file"></i>
-                                                <span>@c.AttachmentName</span>
-                                            </a>
-                                        }
-                                    </div>
-
-                                    <div class="comment-tools">
-                                        <button type="button" onclick="toggleReply(@c.CommentId)">Phản hồi</button>
-
-                                        @if (c.UserId == ViewBag.CurrentTeacherId)
-                                        {
-                                            <button type="button" onclick="openEditComment(@c.CommentId)">Sửa</button>
-                                        }
-
-                                       
-
-                                        <span>@c.CreatedAt?.ToString("HH:mm dd/MM")</span>
-
-                                        <button type="button" onclick="deleteComment(@c.CommentId)">Xóa</button>
-                                    </div>
-
-                                    @if (c.UserId == ViewBag.CurrentTeacherId)
-                                    {
-                                        <div class="edit-comment-box" id="edit-comment-@c.CommentId">
-                                            <input id="edit-comment-input-@c.CommentId"
-                                                   value="@c.Content"
-                                                   class="edit-input"
-                                                   placeholder="Sửa nội dung bình luận..." />
-
-                                            <div class="edit-actions">
-                                                <button type="button" onclick="submitEditComment(@c.CommentId)">Lưu</button>
-                                                <button type="button" onclick="closeEditComment(@c.CommentId)">Hủy</button>
-                                            </div>
-                                        </div>
-                                    }
-
-                                    <form id="reply-@c.CommentId"
-                                          class="reply-form"
-                                          enctype="multipart/form-data"
-                                          onsubmit="return submitReplyAjax(event, @c.CommentId)">
-                                        @Html.AntiForgeryToken()
-
-                                        <input name="content" placeholder="Viết phản hồi..." />
-
-                                        <label class="comment-file-btn">
-                                            <i class="fa fa-image"></i>
-                                            <input type="file" name="imageFile" accept="image/*,video/mp4" hidden />
-                                        </label>
-
-                                        <label class="comment-file-btn">
-                                            <i class="fa fa-paperclip"></i>
-                                            <input type="file" name="attachmentFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar" hidden />
-                                        </label>
-
-                                        <button type="submit">
-                                            <i class="fa fa-paper-plane"></i>
-                                        </button>
-                                    </form>
-
-                                    <div id="reply-list-@c.CommentId">
-                                        @foreach (var r in c.Replies.OrderBy(x => x.CreatedAt))
-                                        {
-  
-                                            <div class="reply-item" id="comment-item-@r.CommentId">
-                                                <div class="comment-avatar small">
-                                                    @r.User.FullName.Substring(0, 1).ToUpper()
-                                                </div>
-
-                                                <div class="comment-bubble">
-                                                    <div class="comment-name">@r.User.FullName</div>
-                                                    <div id="comment-content-@r.CommentId">@r.Content</div>
-
-                                                    @if (r.IsEdited)
-                                                    {
-                                                        <button type="button"
-                                                                class="edited-label"
-                                                                onclick="showCommentHistory(@r.CommentId)">
-                                                            Đã chỉnh sửa
-                                                        </button>
-                                                    }
-                                                    @if (!string.IsNullOrWhiteSpace(r.ImageUrl))
-                                                    {
-                                                        if (r.ImageUrl.EndsWith(".mp4"))
-                                                        {
-                                                            <video src="@r.ImageUrl" class="comment-media" controls></video>
-                                                        }
-                                                        else
-                                                        {
-                                                            <img src="@r.ImageUrl" class="comment-media" />
-                                                        }
-                                                    }
-
-                                                    @if (!string.IsNullOrWhiteSpace(r.AttachmentUrl))
-                                                    {
-                                                        <a href="/Teacher/Blog/DownloadCommentFile/@r.CommentId" class="comment-attachment">
-                                                            <i class="fa fa-file"></i>
-                                                            <span>@r.AttachmentName</span>
-                                                        </a>
-                                                    }
-
-                                                    <div class="comment-tools">
-                                                        @if (r.UserId == ViewBag.CurrentTeacherId)
-                                                        {
-                                                            <button type="button" onclick="openEditComment(@r.CommentId)">Sửa</button>
-                                                        }
-
-                                                        <button type="button" onclick="deleteComment(@r.CommentId)">Xóa</button>
-                                                    </div>
-
-                                                    @if (r.UserId == ViewBag.CurrentTeacherId)
-                                                    {
-                                                        <div class="edit-comment-box" id="edit-comment-@r.CommentId">
-                                                            <input id="edit-comment-input-@r.CommentId"
-                                                                   value="@r.Content"
-                                                                   class="edit-input"
-                                                                   placeholder="Sửa nội dung phản hồi..." />
-
-                                                            <div class="edit-actions">
-                                                                <button type="button" onclick="submitEditComment(@r.CommentId)">Lưu</button>
-                                                                <button type="button" onclick="closeEditComment(@r.CommentId)">Hủy</button>
-                                                            </div>
-                                                        </div>
-                                                    }
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
+                            @await Html.PartialAsync("~/Views/Shared/Partials/_BlogCommentTree.cshtml", c, commentViewData)
                         }
                     </div>
 
@@ -501,6 +371,7 @@
 <style>
 
     .post-header-actions {
+        position: relative;
         display: flex;
         align-items: center;
         gap: 8px;
@@ -509,6 +380,75 @@
         .post-header-actions form {
             margin: 0;
         }
+
+    .post-menu-trigger {
+        border: none;
+        background: #f1f5f9;
+        color: #475569;
+        border-radius: 50%;
+        width: 38px;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background .2s ease, color .2s ease;
+    }
+
+        .post-menu-trigger:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+    .post-options-menu {
+        display: none;
+        position: absolute;
+        top: 44px;
+        right: 0;
+        z-index: 50;
+        width: 220px;
+        padding: 6px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, .14);
+    }
+
+        .post-options-menu.show {
+            display: block;
+        }
+
+        .post-options-menu form {
+            margin: 0;
+        }
+
+    .post-option-item {
+        width: 100%;
+        border: none;
+        background: transparent;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-weight: 700;
+        text-align: left;
+        transition: background .2s ease, color .2s ease;
+    }
+
+        .post-option-item:hover {
+            background: #f8fafc;
+            color: #059669;
+        }
+
+        .post-option-item.danger {
+            color: #e11d48;
+        }
+
+            .post-option-item.danger:hover {
+                background: #fff1f2;
+                color: #be123c;
+            }
 
     .edit-icon-btn {
         border: none;
@@ -882,6 +822,14 @@
         margin-top: 10px;
     }
 
+    .reply-list .reply-list {
+        margin-left: -88px;
+    }
+
+    .reply-list .reply-list .reply-item {
+        margin-left: 44px;
+    }
+
     .comment-avatar {
         width: 42px;
         height: 42px;
@@ -896,6 +844,7 @@
 
     .comment-right {
         flex: 1;
+        min-width: 0;
     }
 
     .comment-bubble {
@@ -1077,6 +1026,31 @@
         return tokenInput ? tokenInput.value : "";
     }
 
+    function closePostMenus() {
+        document.querySelectorAll(".post-options-menu.show")
+            .forEach(menu => menu.classList.remove("show"));
+    }
+
+    function togglePostMenu(id, event) {
+        event?.stopPropagation();
+
+        const menu = document.getElementById(`post-menu-${id}`);
+        if (!menu) return;
+
+        const shouldOpen = !menu.classList.contains("show");
+        closePostMenus();
+
+        if (shouldOpen) {
+            menu.classList.add("show");
+        }
+    }
+
+    document.addEventListener("click", (event) => {
+        if (!event.target.closest(".post-header-actions")) {
+            closePostMenus();
+        }
+    });
+
     function toggleComment(id) {
         const panel = document.getElementById("comment-" + id);
         if (!panel) return;
@@ -1158,26 +1132,9 @@
                                 <button onclick="deleteComment(${data.commentId})" type="button">Xóa</button>
                             </div>
 
-                            <form id="reply-${data.commentId}"
-                                  class="reply-form"
-                                  enctype="multipart/form-data"
-                                  onsubmit="return submitReplyAjax(event, ${data.commentId})">
-                                <input name="content" placeholder="Viết phản hồi..." />
+                            ${renderReplyForm(data.commentId)}
 
-                                <label class="comment-file-btn">
-                                    <i class="fa fa-image"></i>
-                                    <input type="file" name="imageFile" accept="image/*,video/mp4" hidden />
-                                </label>
-
-                                <label class="comment-file-btn">
-                                    <i class="fa fa-paperclip"></i>
-                                    <input type="file" name="attachmentFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar" hidden />
-                                </label>
-
-                                <button type="submit"><i class="fa fa-paper-plane"></i></button>
-                            </form>
-
-                            <div id="reply-list-${data.commentId}"></div>
+                            <div id="reply-list-${data.commentId}" class="reply-list"></div>
                         </div>
                     </div>
                 `);
@@ -1227,8 +1184,11 @@
                             ${renderCommentFiles(data)}
 
                             <div class="comment-tools">
+                                <button type="button" onclick="toggleReply(${data.commentId})">Phản hồi</button>
                                 <button type="button" onclick="deleteComment(${data.commentId})">Xóa</button>
                             </div>
+                            ${renderReplyForm(data.commentId)}
+                            <div id="reply-list-${data.commentId}" class="reply-list"></div>
                         </div>
                     </div>
                 `);
@@ -1286,6 +1246,28 @@
         }
 
         return html;
+    }
+
+    function renderReplyForm(id) {
+        return `
+                <form id="reply-${id}"
+                      class="reply-form"
+                      enctype="multipart/form-data"
+                      onsubmit="return submitReplyAjax(event, ${id})">
+                    <input name="content" placeholder="Viết phản hồi..." />
+
+                    <label class="comment-file-btn">
+                        <i class="fa fa-image"></i>
+                        <input type="file" name="imageFile" accept="image/*,video/mp4" hidden />
+                    </label>
+
+                    <label class="comment-file-btn">
+                        <i class="fa fa-paperclip"></i>
+                        <input type="file" name="attachmentFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar" hidden />
+                    </label>
+
+                    <button type="submit"><i class="fa fa-paper-plane"></i></button>
+                </form>`;
     }
 
     function escapeHtml(text) {

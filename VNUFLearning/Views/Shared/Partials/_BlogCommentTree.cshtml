@@ -1,0 +1,126 @@
+@model VNUFLearning.Models.Comment
+@{
+    var allComments = ViewData["AllComments"] as IEnumerable<VNUFLearning.Models.Comment> ?? Enumerable.Empty<VNUFLearning.Models.Comment>();
+    var currentUserId = ViewData["CurrentUserId"] as int? ?? 0;
+    var isTeacher = ViewData["IsTeacher"] as bool? ?? false;
+    var blogPrefix = ViewData["BlogPrefix"] as string ?? "/Student/Blog";
+    var children = allComments
+        .Where(x => x.ParentCommentId == Model.CommentId)
+        .OrderBy(x => x.CreatedAt)
+        .ToList();
+    var isRoot = Model.ParentCommentId == null;
+    var canEdit = Model.UserId == currentUserId;
+    var isStudentComment = Model.User?.Role?.RoleName == "SinhVien";
+    var canDelete = canEdit || (isTeacher && isStudentComment);
+    var displayName = string.IsNullOrWhiteSpace(Model.User?.FullName) ? "Người dùng" : Model.User.FullName;
+    var avatar = string.IsNullOrWhiteSpace(displayName)
+        ? "?"
+        : displayName.Substring(0, 1).ToUpper();
+}
+
+<div class="@(isRoot ? "comment-item" : "reply-item")" id="comment-item-@Model.CommentId">
+    <div class="comment-avatar @(isRoot ? "" : "small")">@avatar</div>
+
+    <div class="comment-right">
+        <div class="comment-bubble">
+            <div class="comment-name">@displayName</div>
+            <div id="comment-content-@Model.CommentId">@Model.Content</div>
+
+            @if (Model.IsEdited)
+            {
+                <button type="button"
+                        class="edited-label"
+                        onclick="showCommentHistory(@Model.CommentId)">
+                    Đã chỉnh sửa
+                </button>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+            {
+                if (Model.ImageUrl.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
+                {
+                    <video src="@Model.ImageUrl" class="comment-media" controls></video>
+                }
+                else
+                {
+                    <img src="@Model.ImageUrl" class="comment-media" />
+                }
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.AttachmentUrl))
+            {
+                <a href="@blogPrefix/DownloadCommentFile/@Model.CommentId" class="comment-attachment">
+                    <i class="fa fa-file"></i>
+                    <span>@Model.AttachmentName</span>
+                </a>
+            }
+        </div>
+
+        <div class="comment-tools">
+            <button type="button" onclick="toggleReply(@Model.CommentId)">Phản hồi</button>
+
+            @if (canEdit)
+            {
+                <button type="button" onclick="openEditComment(@Model.CommentId)">Sửa</button>
+            }
+
+            @if (canDelete)
+            {
+                <button type="button" onclick="deleteComment(@Model.CommentId)">Xóa</button>
+            }
+
+            <span>@Model.CreatedAt?.ToString("HH:mm dd/MM")</span>
+        </div>
+
+        @if (canEdit)
+        {
+            <div class="edit-comment-box" id="edit-comment-@Model.CommentId">
+                <input id="edit-comment-input-@Model.CommentId"
+                       value="@Model.Content"
+                       class="edit-input"
+                       placeholder="Sửa nội dung bình luận..." />
+
+                <div class="edit-actions">
+                    <button type="button" onclick="submitEditComment(@Model.CommentId)">Lưu</button>
+                    <button type="button" onclick="closeEditComment(@Model.CommentId)">Hủy</button>
+                </div>
+            </div>
+        }
+
+        <form id="reply-@Model.CommentId"
+              class="reply-form"
+              enctype="multipart/form-data"
+              onsubmit="return submitReplyAjax(event, @Model.CommentId)">
+            @Html.AntiForgeryToken()
+
+            <input name="content" placeholder="Viết phản hồi..." />
+
+            <label class="comment-file-btn">
+                <i class="fa fa-image"></i>
+                <input type="file"
+                       name="imageFile"
+                       accept="image/*,video/mp4"
+                       hidden />
+            </label>
+
+            <label class="comment-file-btn">
+                <i class="fa fa-paperclip"></i>
+                <input type="file"
+                       name="attachmentFile"
+                       accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar"
+                       hidden />
+            </label>
+
+            <button type="submit">
+                <i class="fa fa-paper-plane"></i>
+            </button>
+        </form>
+
+        <div id="reply-list-@Model.CommentId" class="reply-list">
+            @foreach (var child in children)
+            {
+                @await Html.PartialAsync("~/Views/Shared/Partials/_BlogCommentTree.cshtml", child, ViewData)
+            }
+        </div>
+    </div>
+</div>

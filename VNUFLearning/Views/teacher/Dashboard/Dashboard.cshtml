@@ -1,0 +1,255 @@
+@model VNUFLearning.Models.ViewModels.TeacherDashboardViewModel
+@{
+    Layout = "~/Views/Shared/_LayoutTeacher.cshtml";
+    ViewData["Title"] = "Dashboard Giang vien";
+}
+
+@* Tailwind chi dung cho dashboard nay. Tat preflight de khong anh huong Bootstrap/layout chung. *@
+<script>
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = {
+        corePlugins: { preflight: false },
+        theme: {
+            extend: {
+                colors: {
+                    vnuf: '#159661'
+                }
+            }
+        }
+    };
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<main class="min-h-screen bg-gradient-to-br from-[#f8fafc] via-emerald-50/40 to-slate-100 px-4 py-7 font-sans text-slate-800 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-7xl space-y-7">
+
+        <!-- Header / Greeting -->
+        <section class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white via-emerald-50 to-lime-50 p-7 shadow-[0_2px_12px_rgb(0,0,0,0.04)] sm:p-8">
+            <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#159661] via-emerald-300 to-lime-200"></div>
+            <div class="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-emerald-200/45 blur-3xl"></div>
+            <div class="absolute bottom-0 right-24 hidden h-24 w-24 rounded-full bg-lime-200/35 blur-2xl md:block"></div>
+
+            <div class="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex min-w-0 items-center gap-5">
+                    @if (!string.IsNullOrWhiteSpace(Model.AvatarUrl))
+                    {
+                        <img src="@Model.AvatarUrl"
+                             alt="@Model.TeacherName"
+                             class="h-20 w-20 shrink-0 rounded-2xl object-cover shadow-sm" />
+                    }
+                    else
+                    {
+                        <div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-[#159661] text-2xl font-bold text-white shadow-sm">
+                            @(string.IsNullOrWhiteSpace(Model.TeacherName) ? "GV" : Model.TeacherName.Trim()[0].ToString().ToUpper())
+                        </div>
+                    }
+
+                    <div class="min-w-0">
+                        <p class="text-sm font-semibold uppercase tracking-wide text-[#159661] sm:text-base">Teacher Dashboard</p>
+                        <h1 class="mt-1 truncate text-3xl font-bold tracking-tight text-slate-800 sm:text-4xl">
+                            Xin ch&#224;o, @Model.TeacherName
+                        </h1>
+                        <p class="mt-3 max-w-2xl text-base font-normal leading-7 text-slate-500">
+                            Theo d&#245;i l&#7899;p h&#7885;c, b&#224;i thi, h&#7885;c li&#7879;u v&#224; c&#225;c ho&#7841;t &#273;&#7897;ng m&#7899;i nh&#7845;t trong ng&#224;y.
+                        </p>
+                    </div>
+                </div>
+
+                <a href="/Teacher/Exams"
+                   class="inline-flex w-full items-center justify-center rounded-xl bg-[#159661] px-6 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-emerald-700 sm:w-auto">
+                    Qu&#7843;n l&#253; &#273;&#7873; thi
+                    <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                </a>
+            </div>
+        </section>
+
+        <!-- KPI Summary -->
+        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <article class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white to-emerald-50 p-6 shadow-[0_2px_12px_rgb(0,0,0,0.04)]">
+                <div class="absolute inset-x-0 top-0 h-1 bg-emerald-400/70"></div>
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-base font-normal text-slate-500">M&#244;n &#273;ang d&#7841;y</p>
+                        <p class="mt-3 text-4xl font-bold tracking-tight text-slate-800">@Model.TotalCourses</p>
+                    </div>
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                        <i class="fa-solid fa-book-open text-xl"></i>
+                    </div>
+                </div>
+            </article>
+
+            <article class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white to-blue-50 p-6 shadow-[0_2px_12px_rgb(0,0,0,0.04)]">
+                <div class="absolute inset-x-0 top-0 h-1 bg-blue-400/70"></div>
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-base font-normal text-slate-500">T&#7893;ng sinh vi&#234;n</p>
+                        <p class="mt-3 text-4xl font-bold tracking-tight text-slate-800">@Model.TotalStudents</p>
+                    </div>
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                        <i class="fa-solid fa-user-graduate text-xl"></i>
+                    </div>
+                </div>
+            </article>
+
+            <article class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white to-amber-50 p-6 shadow-[0_2px_12px_rgb(0,0,0,0.04)]">
+                <div class="absolute inset-x-0 top-0 h-1 bg-amber-400/70"></div>
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-base font-normal text-slate-500">B&#224;i thi ch&#7901; ch&#7845;m</p>
+                        <p class="mt-3 text-4xl font-bold tracking-tight text-slate-800">@Model.PendingExamsToGrade</p>
+                    </div>
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+                        <i class="fa-solid fa-clipboard-check text-xl"></i>
+                    </div>
+                </div>
+            </article>
+
+            <article class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white to-rose-50 p-6 shadow-[0_2px_12px_rgb(0,0,0,0.04)]">
+                <div class="absolute inset-x-0 top-0 h-1 bg-rose-400/70"></div>
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-base font-normal text-slate-500">Blog ch&#7901; duy&#7879;t</p>
+                        <p class="mt-3 text-4xl font-bold tracking-tight text-slate-800">@Model.PendingBlogsToApprove</p>
+                    </div>
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                        <i class="fa-regular fa-newspaper text-xl"></i>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <section class="grid gap-6 xl:grid-cols-[0.9fr_1.6fr]">
+
+            <!-- Todo List -->
+            <aside class="rounded-2xl bg-gradient-to-br from-white to-emerald-50/70 p-6 shadow-[0_2px_12px_rgb(0,0,0,0.04)] sm:p-7">
+                <div class="mb-2">
+                    <h2 class="text-xl font-bold tracking-tight text-slate-800">C&#244;ng vi&#7879;c c&#7847;n x&#7917; l&#253;</h2>
+                    <p class="mt-1 text-base font-normal text-slate-500">C&#225;c m&#7909;c &#432;u ti&#234;n trong h&#244;m nay.</p>
+                </div>
+
+                <div class="mt-3 divide-y divide-emerald-100/80">
+                    @foreach (var item in Model.TodoItems)
+                    {
+                        <div class="flex items-start gap-4 py-5">
+                            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#159661] shadow-sm">
+                                <i class="@item.IconCssClass text-base"></i>
+                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h3 class="text-base font-semibold text-slate-800">@item.Title</h3>
+                                    @if (item.Count > 0)
+                                    {
+                                        <span class="rounded-full bg-rose-50 px-2.5 py-1 text-sm font-semibold text-rose-600">@item.Count</span>
+                                    }
+                                </div>
+                                <p class="mt-1 text-base font-normal leading-7 text-slate-500">@item.Description</p>
+                            </div>
+
+                            <a href="@item.Url"
+                               class="shrink-0 rounded-lg bg-white px-3.5 py-2 text-sm font-semibold text-[#159661] shadow-sm transition hover:bg-emerald-100">
+                                X&#7917; l&#253;
+                            </a>
+                        </div>
+                    }
+                </div>
+            </aside>
+
+            <!-- Courses -->
+            <section class="rounded-2xl bg-gradient-to-br from-white to-sky-50/70 p-6 shadow-[0_2px_12px_rgb(0,0,0,0.04)] sm:p-7">
+                <div class="mb-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight text-slate-800">Danh s&#225;ch m&#244;n h&#7885;c</h2>
+                        <p class="mt-1 text-base font-normal text-slate-500">C&#225;c m&#244;n &#273;ang ph&#7909; tr&#225;ch v&#224; t&#224;i nguy&#234;n li&#234;n quan.</p>
+                    </div>
+                    <a href="/Teacher/Subjects" class="text-base font-semibold text-[#159661] hover:text-emerald-700">
+                        Xem t&#7845;t c&#7843;
+                    </a>
+                </div>
+
+                @if (Model.ActiveCourses.Any())
+                {
+                    <div class="mt-3 divide-y divide-sky-100/80">
+                        @foreach (var course in Model.ActiveCourses)
+                        {
+                            <article class="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
+                                <div class="flex min-w-0 gap-4">
+                                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-[#159661] shadow-sm">
+                                        <i class="fa-solid fa-book text-lg"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-semibold uppercase tracking-wide text-[#159661]">@course.CourseCode</p>
+                                        <h3 class="mt-1 text-lg font-semibold leading-7 text-slate-800">@course.CourseName</h3>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-wrap gap-2 md:justify-end">
+                                    <span class="rounded-full bg-white px-3.5 py-1.5 text-sm font-normal text-slate-600 shadow-sm">
+                                        @course.StudentCount SV
+                                    </span>
+                                    <span class="rounded-full bg-white px-3.5 py-1.5 text-sm font-normal text-slate-600 shadow-sm">
+                                        @course.ExamCount &#273;&#7873; thi
+                                    </span>
+                                    <span class="rounded-full bg-white px-3.5 py-1.5 text-sm font-normal text-slate-600 shadow-sm">
+                                        @course.DocumentCount t&#224;i li&#7879;u
+                                    </span>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="py-10 text-center">
+                        <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                        <p class="text-base font-semibold text-slate-800">Ch&#432;a c&#243; m&#244;n h&#7885;c &#273;&#432;&#7907;c ph&#226;n c&#244;ng</p>
+                        <p class="mt-1 text-base font-normal text-slate-500">Khi c&#243; m&#244;n h&#7885;c, danh s&#225;ch s&#7869; hi&#7875;n th&#7883; t&#7841;i &#273;&#226;y.</p>
+                    </div>
+                }
+            </section>
+        </section>
+
+        <!-- Activity Timeline -->
+        <section class="rounded-2xl bg-gradient-to-br from-white to-slate-100/70 p-6 shadow-[0_2px_12px_rgb(0,0,0,0.04)] sm:p-7">
+            <div class="mb-4">
+                <h2 class="text-xl font-bold tracking-tight text-slate-800">Log h&#7879; th&#7889;ng</h2>
+                <p class="mt-1 text-base font-normal text-slate-500">D&#242;ng th&#7901;i gian c&#225;c ho&#7841;t &#273;&#7897;ng m&#7899;i nh&#7845;t t&#7915; l&#7899;p h&#7885;c v&#224; h&#7885;c li&#7879;u.</p>
+            </div>
+
+            @if (Model.RecentActivities.Any())
+            {
+                <div class="relative">
+                    <div class="absolute left-[19px] top-4 h-[calc(100%-2rem)] w-px bg-emerald-200"></div>
+
+                    @foreach (var activity in Model.RecentActivities)
+                    {
+                        <div class="relative flex gap-4 py-4">
+                            <div class="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#159661] shadow-sm ring-4 ring-emerald-50">
+                                <i class="@activity.IconCssClass text-xs"></i>
+                            </div>
+                            <div class="min-w-0 flex-1 border-b border-slate-200/70 pb-4">
+                                <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                    <h3 class="text-base font-semibold text-slate-800">@activity.Title</h3>
+                                    <span class="text-sm font-normal text-slate-500">@(activity.CreatedAt?.ToString("HH:mm dd/MM/yyyy") ?? "-")</span>
+                                </div>
+                                <p class="mt-1 text-base font-normal leading-7 text-slate-500">@activity.Description</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="py-10 text-center">
+                    <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <p class="text-base font-semibold text-slate-800">Ch&#432;a c&#243; ho&#7841;t &#273;&#7897;ng g&#7847;n &#273;&#226;y</p>
+                    <p class="mt-1 text-base font-normal text-slate-500">Ho&#7841;t &#273;&#7897;ng c&#7911;a sinh vi&#234;n v&#224; gi&#7843;ng vi&#234;n s&#7869; xu&#7845;t hi&#7879;n t&#7841;i &#273;&#226;y.</p>
+                </div>
+            }
+        </section>
+    </div>
+</main>

@@ -395,3 +395,108 @@
             width: 100%;
         }
 }
+
+/* Responsive tightening for tablet/mobile */
+@media (max-width: 991.98px) {
+    .practice-page {
+        width: 100%;
+        max-width: 100%;
+        padding: 24px 18px 48px;
+    }
+
+    .practice-header,
+    .practice-card,
+    .practice-summary,
+    .practice-smart,
+    .practice-info,
+    .practice-empty,
+    .mock-card {
+        border-radius: 20px;
+        padding: 24px;
+    }
+
+    .practice-header h1 {
+        font-size: clamp(1.6rem, 5vw, 2.1rem);
+    }
+
+    .practice-header p,
+    .practice-user,
+    .practice-option,
+    .practice-count,
+    .practice-info,
+    .mock-meta,
+    .mock-card a {
+        font-size: 1rem;
+    }
+
+    .practice-tabs {
+        width: 100%;
+    }
+
+    .practice-tab {
+        padding: 14px 10px;
+        font-size: 1rem;
+    }
+
+    .practice-card h2,
+    .practice-summary h2,
+    .mock-card h3 {
+        font-size: clamp(1.25rem, 4vw, 1.65rem);
+    }
+
+    .practice-select {
+        height: auto;
+        min-height: 52px;
+        font-size: 1rem;
+        padding: 0 14px;
+    }
+
+    .practice-option {
+        min-height: 110px;
+        height: auto;
+        padding: 16px;
+    }
+
+    .summary-row,
+    .mock-meta {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .practice-page {
+        padding: 18px 10px 36px;
+    }
+
+    .practice-header,
+    .practice-card,
+    .practice-summary,
+    .practice-smart,
+    .practice-info,
+    .practice-empty,
+    .mock-card {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .practice-tabs {
+        grid-template-columns: 1fr;
+    }
+
+    .practice-option-grid,
+    .mock-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .practice-count {
+        width: 100%;
+    }
+
+    .practice-summary button,
+    .mock-card a {
+        font-size: 1rem;
+        padding: 14px;
+    }
+}

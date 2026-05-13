@@ -28,9 +28,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
-app.MapHub
-<BlogHub>
-    ("/blogHub");
 
 <body>
     <div class="vnuf-app">
@@ -93,8 +90,13 @@ app.MapHub
             </div>
         </aside>
 
+        <button type="button" class="vnuf-sidebar-overlay" aria-label="Đóng menu"></button>
+
         <main class="vnuf-main">
             <header class="vnuf-topbar">
+                <button type="button" class="vnuf-sidebar-toggle" aria-label="Mở menu" aria-expanded="false">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
                 <h4 class="topbar-title">@ViewData["Title"]</h4>
 
                 <div class="topbar-user">
@@ -125,6 +127,28 @@ app.MapHub
     </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (() => {
+            const toggle = document.querySelector('.vnuf-sidebar-toggle');
+            const overlay = document.querySelector('.vnuf-sidebar-overlay');
+            const closeMenu = () => {
+                document.body.classList.remove('vnuf-sidebar-open');
+                toggle?.setAttribute('aria-expanded', 'false');
+            };
+
+            toggle?.addEventListener('click', () => {
+                const isOpen = document.body.classList.toggle('vnuf-sidebar-open');
+                toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            });
+
+            overlay?.addEventListener('click', closeMenu);
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 992) {
+                    closeMenu();
+                }
+            });
+        })();
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

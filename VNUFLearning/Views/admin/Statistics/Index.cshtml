@@ -113,31 +113,33 @@
                     <a href="/Admin/Subjects" class="text-success fw-bold text-decoration-none">Xem tất cả</a>
                 </div>
 
-                <table class="table align-middle mb-0 stat-table">
-                    <thead>
-                        <tr>
-                            <th>Tên môn học</th>
-                            <th>Số câu hỏi</th>
-                            <th>Lượt làm bài</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @{
-                            int stt = 1;
-                        }
-
-                        @foreach (var item in ViewBag.TopSubjects)
-                        {
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0 stat-table">
+                        <thead>
                             <tr>
-                                <td class="fw-bold">@stt. @item.SubjectName</td>
-                                <td>@item.QuestionCount</td>
-                                <td class="text-success fw-bold">@item.SubmitCount</td>
+                                <th>Tên môn học</th>
+                                <th>Số câu hỏi</th>
+                                <th>Lượt làm bài</th>
                             </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                int stt = 1;
+                            }
 
-                            stt++;
-                        }
-                    </tbody>
-                </table>
+                            @foreach (var item in ViewBag.TopSubjects)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@stt. @item.SubjectName</td>
+                                    <td>@item.QuestionCount</td>
+                                    <td class="text-success fw-bold">@item.SubmitCount</td>
+                                </tr>
+
+                                stt++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 

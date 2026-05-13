@@ -161,3 +161,55 @@
     background: rgba(255,255,255,.72) !important;
     border: 1px solid #b8e6d6 !important;
 }
+
+@media (max-width: 991.98px) {
+    .practice-card,
+    .practice-summary,
+    .practice-smart,
+    .practice-info,
+    .practice-empty,
+    .result-card,
+    .review-card,
+    .result-hero,
+    .stat-item,
+    .success-main .ai-box,
+    .mock-card,
+    .question-card {
+        border-radius: 20px !important;
+    }
+
+    .do-header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+}
+
+@media (max-width: 575.98px) {
+    body::before,
+    body::after,
+    .success-page::before,
+    .success-page::after,
+    .result-detail-page::before,
+    .result-detail-page::after,
+    .practice-page::before,
+    .practice-page::after {
+        display: none !important;
+    }
+
+    .practice-card,
+    .practice-summary,
+    .practice-smart,
+    .practice-info,
+    .practice-empty,
+    .result-card,
+    .review-card,
+    .result-hero,
+    .stat-item,
+    .success-main .ai-box,
+    .mock-card,
+    .question-card {
+        border-radius: 18px !important;
+        box-shadow: 0 10px 24px rgba(0, 91, 51, .08) !important;
+    }
+}
