@@ -198,6 +198,9 @@ namespace VNUFLearning.Controllers.Teacher
             model.SourceFileSize = sourceFile.Size;
 
             int order = 1;
+            var defaultQuestionScore = pickedQuestions.Any()
+                ? Math.Round(10.0 / pickedQuestions.Count, 4)
+                : 0;
 
             foreach (var q in pickedQuestions)
             {
@@ -205,7 +208,8 @@ namespace VNUFLearning.Controllers.Teacher
                 {
                     ExamId = model.ExamId,
                     QuestionId = q.QuestionId,
-                    QuestionOrder = order++
+                    QuestionOrder = order++,
+                    Score = defaultQuestionScore
                 });
             }
 
@@ -232,6 +236,7 @@ namespace VNUFLearning.Controllers.Teacher
             ws.Cell(1, 8).Value = "Level";
             ws.Cell(1, 9).Value = "Chapter";
             ws.Cell(1, 10).Value = "Explaination";
+            ws.Cell(1, 11).Value = "Score";
 
             ws.Cell(2, 1).Value = "Khóa chính trong cơ sở dữ liệu dùng để làm gì?";
             ws.Cell(2, 2).Value = 1;
@@ -243,6 +248,7 @@ namespace VNUFLearning.Controllers.Teacher
             ws.Cell(2, 8).Value = 1;
             ws.Cell(2, 9).Value = "Chương 1";
             ws.Cell(2, 10).Value = "Primary Key dùng để định danh duy nhất bản ghi.";
+            ws.Cell(2, 11).Value = 5;
             ws.Cell(3, 1).Value = "Trình bày khái niệm Socket và vai trò của Socket trong lập trình mạng.";
             ws.Cell(3, 2).Value = 2;
             ws.Cell(3, 3).Value = "";
@@ -253,6 +259,7 @@ namespace VNUFLearning.Controllers.Teacher
             ws.Cell(3, 8).Value = 2;
             ws.Cell(3, 9).Value = "Chương 1";
             ws.Cell(3, 10).Value = "Rubric: Socket là endpoint giao tiếp mạng 25%; gắn với IP và Port 20%; gửi/nhận dữ liệu client-server 30%; hỗ trợ TCP/UDP 15%; có ví dụ ứng dụng 10%.";
+            ws.Cell(3, 11).Value = 5;
 
             ws.Row(1).Style.Font.Bold = true;
             ws.Columns().AdjustToContents();
@@ -365,6 +372,9 @@ namespace VNUFLearning.Controllers.Teacher
 
                 var rawCorrectAnswer = ws.Cell(row, 7).GetString().Trim();
                 var rawExplaination = ws.Cell(row, 10).GetString().Trim();
+                var questionScore = double.TryParse(ws.Cell(row, 11).GetString().Trim(), out var sc) && sc > 0
+                    ? sc
+                    : (double?)null;
 
                 var question = new Question
                 {
@@ -401,7 +411,8 @@ namespace VNUFLearning.Controllers.Teacher
                 {
                     ExamId = exam.ExamId,
                     QuestionId = question.QuestionId,
-                    QuestionOrder = order++
+                    QuestionOrder = order++,
+                    Score = questionScore
                 });
 
                 success++;
@@ -587,8 +598,13 @@ namespace VNUFLearning.Controllers.Teacher
             ws.Cell(5, 8).Value = "Level";
             ws.Cell(5, 9).Value = "Chapter";
             ws.Cell(5, 10).Value = "Explaination";
+            ws.Cell(5, 11).Value = "Score";
 
             var row = 6;
+            var defaultQuestionScore = questions.Any()
+                ? Math.Round(10.0 / questions.Count, 4)
+                : 0;
+
             foreach (var question in questions)
             {
                 ws.Cell(row, 1).Value = question.Content;
@@ -601,6 +617,7 @@ namespace VNUFLearning.Controllers.Teacher
                 ws.Cell(row, 8).Value = question.Level;
                 ws.Cell(row, 9).Value = question.Chapter;
                 ws.Cell(row, 10).Value = question.Explaination;
+                ws.Cell(row, 11).Value = defaultQuestionScore;
                 row++;
             }
 
@@ -671,6 +688,40 @@ namespace VNUFLearning.Controllers.Teacher
 
             TempData["Success"] = "Đã loại câu hỏi khỏi đề.";
             return Redirect($"/Teacher/Exams/ManageQuestions/{examId}");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Route("~/Teacher/Exams/UpdateQuestionScore")]
+        public async Task<IActionResult> UpdateQuestionScore(int examQuestionId, double score)
+        {
+            var teacherId = GetTeacherId();
+            if (teacherId == null) return Redirect("/Account/Login");
+
+            var examQuestion = await _context.ExamQuestions
+                .Include(eq => eq.Exam)
+                .FirstOrDefaultAsync(eq => eq.ExamQuestionId == examQuestionId &&
+                                           eq.Exam.TeacherId == teacherId.Value);
+
+            if (examQuestion == null) return NotFound();
+
+            if (examQuestion.Exam.IsPublished)
+            {
+                TempData["Error"] = "Vui lòng đóng đề thi trước khi chỉnh điểm câu hỏi.";
+                return Redirect($"/Teacher/Exams/ManageQuestions/{examQuestion.ExamId}");
+            }
+
+            if (score <= 0)
+            {
+                TempData["Error"] = "Điểm câu hỏi phải lớn hơn 0.";
+                return Redirect($"/Teacher/Exams/ManageQuestions/{examQuestion.ExamId}");
+            }
+
+            examQuestion.Score = Math.Round(score, 2);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đã cập nhật điểm câu hỏi.";
+            return Redirect($"/Teacher/Exams/ManageQuestions/{examQuestion.ExamId}");
         }
 
         [HttpPost]
@@ -750,7 +801,8 @@ namespace VNUFLearning.Controllers.Teacher
                 {
                     ExamId = examId,
                     QuestionId = q.QuestionId,
-                    QuestionOrder = ++maxOrder
+                    QuestionOrder = ++maxOrder,
+                    Score = Math.Round(10.0 / (exam.ExamQuestions.Count + questions.Count), 4)
                 });
             }
 

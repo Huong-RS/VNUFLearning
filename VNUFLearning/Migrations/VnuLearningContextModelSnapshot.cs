@@ -297,6 +297,9 @@ namespace VNUFLearning.Migrations
                     b.Property<int?>("QuestionOrder")
                         .HasColumnType("int");
 
+                    b.Property<double?>("Score")
+                        .HasColumnType("float");
+
                     b.HasKey("ExamQuestionId");
 
                     b.HasIndex("ExamId");

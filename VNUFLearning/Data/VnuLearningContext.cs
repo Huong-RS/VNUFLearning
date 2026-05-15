@@ -141,6 +141,8 @@ public partial class VnufLearningContext : DbContext
         {
             entity.HasKey(e => e.ExamQuestionId);
 
+            entity.Property(e => e.Score).HasColumnType("float");
+
             entity.HasOne(e => e.Exam)
                 .WithMany(e => e.ExamQuestions)
                 .HasForeignKey(e => e.ExamId)

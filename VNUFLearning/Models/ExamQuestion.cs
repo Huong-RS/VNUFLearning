@@ -10,6 +10,8 @@ public partial class ExamQuestion
 
     public int? QuestionOrder { get; set; }
 
+    public double? Score { get; set; }
+
     public virtual Exam Exam { get; set; } = null!;
 
     public virtual Question Question { get; set; } = null!;

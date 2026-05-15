@@ -183,6 +183,10 @@
                                             @q.Chapter
                                         </span>
                                     }
+
+                                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">
+                                        Điểm: @((item.Score ?? 0).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))
+                                    </span>
                                 </div>
 
                                 <h5 class="fw-bold mb-3">@q.Content</h5>
@@ -260,16 +264,35 @@
 
                         @if (!Model.IsPublished)
                         {
-                            <form method="post"
-                                  action="/Teacher/Exams/RemoveQuestion"
-                                  onsubmit="return confirm('Loại câu hỏi này khỏi đề?');">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="examQuestionId" value="@item.ExamQuestionId" />
+                            <div class="d-flex flex-column gap-2 align-items-end">
+                                <form method="post"
+                                      action="/Teacher/Exams/UpdateQuestionScore"
+                                      class="d-flex gap-2 align-items-center">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="examQuestionId" value="@item.ExamQuestionId" />
+                                    <input type="number"
+                                           name="score"
+                                           value="@((item.Score ?? 0).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))"
+                                           min="0.01"
+                                           step="0.01"
+                                           class="form-control"
+                                           style="width:90px;" />
+                                    <button class="btn btn-outline-primary rounded-pill fw-bold">
+                                        <i class="fa fa-floppy-disk me-1"></i> Lưu điểm
+                                    </button>
+                                </form>
 
-                                <button class="btn btn-outline-danger rounded-pill fw-bold">
-                                    <i class="fa fa-trash me-1"></i> Loại bỏ
-                                </button>
-                            </form>
+                                <form method="post"
+                                      action="/Teacher/Exams/RemoveQuestion"
+                                      onsubmit="return confirm('Loại câu hỏi này khỏi đề?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="examQuestionId" value="@item.ExamQuestionId" />
+
+                                    <button class="btn btn-outline-danger rounded-pill fw-bold">
+                                        <i class="fa fa-trash me-1"></i> Loại bỏ
+                                    </button>
+                                </form>
+                            </div>
                         }
                     </div>
                 </div>

@@ -181,15 +181,18 @@ namespace VNUFLearning.Controllers.Student
         {
             var userId = GetCurrentUserId();
 
-            var questionIds = input.Answers.Select(a => a.QuestionId).ToList();
+            var questionIds = input.Answers
+                .Select(a => a.QuestionId)
+                .Distinct()
+                .ToList();
 
             var questions = await _context.Questions
                 .Where(q => questionIds.Contains(q.QuestionId))
                 .ToListAsync();
 
-            int totalMcq = 0;
-            int correctMcq = 0;
+            var questionScores = await BuildQuestionScoreMapAsync(input, questionIds);
             bool hasEssay = false;
+            double totalScore = 0;
 
             var result = new ExamResult
             {
@@ -206,16 +209,19 @@ namespace VNUFLearning.Controllers.Student
                 var question = questions.FirstOrDefault(q => q.QuestionId == answer.QuestionId);
                 if (question == null) continue;
 
+                var maxScore = questionScores.TryGetValue(question.QuestionId, out var configuredScore)
+                    ? configuredScore
+                    : 0;
+
                 bool? isCorrect = null;
                 double? essayScore = null;
                 double? similarityPercent = null;
                 string? aiFeedback = null;
+                double earnedScore = 0;
 
                 // TRẮC NGHIỆM
                 if (question.QuestionType == 1)
                 {
-                    totalMcq++;
-
                     isCorrect = string.Equals(
                         answer.UserAnswer?.Trim(),
                         question.CorrectAnswer?.Trim(),
@@ -223,7 +229,9 @@ namespace VNUFLearning.Controllers.Student
                     );
 
                     if (isCorrect == true)
-                        correctMcq++;
+                    {
+                        earnedScore = maxScore;
+                    }
                 }
 
                 // TỰ LUẬN → GEMINI CHẤM
@@ -238,17 +246,22 @@ namespace VNUFLearning.Controllers.Student
                         var aiResult = await _geminiService.GradeEssayAsync(
                             question.Content,
                             question.CorrectAnswer ?? "",
-                            studentAnswer
+                            studentAnswer,
+                            question.Explaination
                         );
 
-                        essayScore = Math.Round(aiResult.Score, 2);
-                        similarityPercent = Math.Round(aiResult.Percent, 2);
+                        similarityPercent = Math.Round(ClampPercent(aiResult.Percent), 2);
+                        earnedScore = Math.Round(similarityPercent.Value * maxScore / 100.0, 2);
+                        essayScore = earnedScore;
 
                         aiFeedback =
                             $"Mức độ đúng: {similarityPercent}%\n" +
-                            $"Điểm tự luận: {essayScore}/10\n\n" +
+                            $"Điểm tự luận backend tính: {essayScore:0.##}/{maxScore:0.##}\n" +
+                            $"Độ tương đồng ngữ nghĩa: {Math.Round(aiResult.SemanticSimilarity, 2)}%\n\n" +
+                            FormatGeminiAnalysis(aiResult) +
                             $"Nhận xét: {aiResult.Comment}\n\n" +
-                            $"Góp ý: {aiResult.Advice}";
+                            $"Góp ý: {aiResult.Advice}" +
+                            (aiResult.IsFallback ? "\n\nLưu ý: Hệ thống đã dùng fallback vì Gemini lỗi hoặc trả JSON không hợp lệ." : "");
                     }
                     else
                     {
@@ -257,6 +270,8 @@ namespace VNUFLearning.Controllers.Student
                         aiFeedback = "Sinh viên chưa nhập câu trả lời tự luận.";
                     }
                 }
+
+                totalScore += earnedScore;
 
                 result.ExamDetails.Add(new ExamDetail
                 {
@@ -269,38 +284,8 @@ namespace VNUFLearning.Controllers.Student
                 });
             }
 
-            // TÍNH ĐIỂM
-            var essayDetails = result.ExamDetails
-                .Where(x => x.EssayScore.HasValue)
-                .ToList();
-
-            double? mcqScore = totalMcq > 0
-                ? Math.Round((double)correctMcq / totalMcq * 10, 2)
-                : null;
-
-            double? essayScoreAvg = essayDetails.Any()
-                ? Math.Round(essayDetails.Average(x => x.EssayScore!.Value), 2)
-                : null;
-
-            if (mcqScore.HasValue && essayScoreAvg.HasValue)
-            {
-                result.Score = Math.Round(
-                    (mcqScore.Value + essayScoreAvg.Value) / 2,
-                    2
-                );
-            }
-            else if (mcqScore.HasValue)
-            {
-                result.Score = mcqScore.Value;
-            }
-            else if (essayScoreAvg.HasValue)
-            {
-                result.Score = essayScoreAvg.Value;
-            }
-            else
-            {
-                result.Score = 0;
-            }
+            // TÍNH ĐIỂM: mỗi câu có điểm riêng, tổng bài chuẩn hóa về 10.
+            result.Score = Math.Round(Math.Min(10, Math.Max(0, totalScore)), 2);
 
             if (hasEssay)
             {
@@ -332,6 +317,60 @@ namespace VNUFLearning.Controllers.Student
                         ?? User.FindFirstValue("UserId");
 
             return int.TryParse(value, out int id) ? id : 1;
+        }
+
+        private async Task<Dictionary<int, double>> BuildQuestionScoreMapAsync(
+            SubmitPracticeInput input,
+            List<int> questionIds)
+        {
+            if (!questionIds.Any())
+            {
+                return new Dictionary<int, double>();
+            }
+
+            if (input.ExamId.HasValue)
+            {
+                var examScores = await _context.ExamQuestions
+                    .AsNoTracking()
+                    .Where(eq => eq.ExamId == input.ExamId.Value && questionIds.Contains(eq.QuestionId))
+                    .Select(eq => new
+                    {
+                        eq.QuestionId,
+                        Score = eq.Score ?? 0
+                    })
+                    .ToListAsync();
+
+                var configuredTotal = examScores.Sum(x => x.Score);
+                if (configuredTotal > 0)
+                {
+                    return examScores.ToDictionary(
+                        x => x.QuestionId,
+                        x => Math.Round(x.Score * 10.0 / configuredTotal, 4));
+                }
+            }
+
+            var equalScore = 10.0 / questionIds.Count;
+            return questionIds.Distinct().ToDictionary(id => id, _ => Math.Round(equalScore, 4));
+        }
+
+        private static double ClampPercent(double value)
+        {
+            if (double.IsNaN(value) || double.IsInfinity(value)) return 0;
+            return Math.Max(0, Math.Min(100, value));
+        }
+
+        private static string FormatGeminiAnalysis(GeminiGradeResult aiResult)
+        {
+            var matched = aiResult.MatchedIdeas.Any()
+                ? string.Join("\n", aiResult.MatchedIdeas.Select(x =>
+                    $"- {x.Id}: {x.StudentEvidence} ({Math.Round(x.SemanticSimilarity, 2)}%)"))
+                : "- Chưa xác định ý đúng.";
+
+            var missing = aiResult.MissingIdeas.Any()
+                ? string.Join("\n", aiResult.MissingIdeas.Select(x => $"- {x.Id}: {x.Idea}"))
+                : "- Không có ý thiếu rõ ràng.";
+
+            return $"Ý sinh viên đã trả lời đúng:\n{matched}\n\nÝ còn thiếu:\n{missing}\n\n";
         }
     }
 
